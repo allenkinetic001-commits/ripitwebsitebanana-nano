@@ -1,1430 +1,1155 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import PostCard from '../components/PostCard';
-import { Camera, Search, Info, Sparkles, Users, Skull, Plus, Flame, Clock, X, Calendar, ChevronRight, Trophy, ArrowBigUp, ArrowBigDown } from 'lucide-react';
-import { useChallenge } from '../contexts/ChallengeContext';
-import { useSupabasePosts, createPost, uploadPostMedia, formatPostForUI } from '../hooks/useSupabase';
-import { supabase } from '../lib/supabase';
-import { cn } from '../utils';
-import { ProfileHeartsToggle } from '../components/ProfileHeartsToggle';
-import { useLongPress } from '../hooks/useLongPress';
-import EmptyFeed from '../components/Empty';
+import React, { useState, useEffect } from 'react';
+import { 
+  Flame, Clock, X, ChevronRight, Trophy, Skull, Shield, 
+  ExternalLink, ChevronDown, Check, Send, Info, Lock
+} from 'lucide-react';
 
-const HomeUserItem = React.memo(({ user, index, navigate, isSearch = false }: any) => {
-  const [showHearts, setShowHearts] = useState(false);
-  const { handlers: heartsHandlers } = useLongPress(() => setShowHearts(!showHearts), 400);
-  const { followedUsers, toggleFollow, isSurvivor, addEnemy, enemies, userProfile } = useChallenge();
-  const isFollowing = followedUsers.includes(user.username);
-  const [isTraitor, setIsTraitor] = useState(false);
-  const hasActed = enemies.some((e: any) => e.username === user.username);
+interface MockPost {
+  id: string;
+  username: string;
+  avatar: string;
+  content: string;
+  timeRemaining: string;
+  lives: number;
+  isNew?: boolean;
+}
 
-  const toggleTraitor = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsTraitor(!isTraitor);
-  };
-
-  return (
-    <div 
-      onClick={() => navigate(`/user/${user.username}`)}
-      className="flex items-center p-3 hover:bg-zinc-50 transition-colors w-full text-left cursor-pointer"
-    >
-      <div className="relative shrink-0">
-        <div className="w-12 h-12 rounded-full border border-zinc-200 overflow-hidden bg-zinc-50">
-          <img 
-            src={user.avatar || "/custom-empty-profile.png"} 
-            alt={user.username} 
-            className="w-full h-full object-cover" 
-          />
-        </div>
-      </div>
-      <div className="flex-1 ml-3 overflow-hidden">
-        <p className="text-sm font-bold text-zinc-900 truncate">
-          {user.fullName || `@${user.username}`}
-        </p>
-        <p className="text-xs text-zinc-500 truncate">
-          {user.fullName ? `@${user.username}` : (isSearch ? 'Survivor' : user.caption)}
-        </p>
-      </div>
-      <div className="flex items-center gap-1 shrink-0 ml-2">
-        {(isTraitor && !hasActed) ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              addEnemy(user);
-              setIsTraitor(false);
-            }}
-            className="animate-pop-in transition-all active:scale-95 flex items-center justify-center p-1"
-          >
-            <img 
-              key="traitor-icon"
-              src="/traitor.png" 
-              alt="Traitor" 
-              className="h-6 w-auto object-contain animate-pop-in" 
-            />
-          </button>
-        ) : (
-          <div className="flex items-center space-x-2">
-            {user.username !== userProfile?.username && (
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addEnemy(user);
-                }}
-                className="active:scale-95 drop-shadow-sm"
-              >
-                {hasActed ? (
-                  <img 
-                    key="added"
-                    src="/btn-added.png" 
-                    alt="Added" 
-                    className="h-7 w-auto object-contain animate-pop-in"
-                  />
-                ) : (
-                  <img 
-                    key="add"
-                    src="/add-enemy.png" 
-                    alt="Add Enemy" 
-                    className="h-8 w-auto object-contain animate-pop-in"
-                  />
-                )}
-              </button>
-            )}
-            {user.username !== userProfile?.username && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFollow(user.username);
-                }}
-                className="transition-all active:scale-95 hover:scale-105"
-              >
-                {isFollowing ? (
-                  <img
-                    key="following"
-                    src="/btn-following.png"
-                    alt="Following"
-                    className="h-8 w-auto object-contain animate-pop-in"
-                    style={{ imageRendering: '-webkit-optimize-contrast' }}
-                  />
-                ) : (
-                  <img
-                    key="follow"
-                    src="/btn-follow.png"
-                    alt="Follow"
-                    className="h-8 w-auto object-contain animate-pop-in"
-                    style={{ imageRendering: '-webkit-optimize-contrast' }}
-                  />
-                )}
-              </button>
-            )}
-          </div>
-        )}
-        {!hasActed && (
-          <div 
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleTraitor(e);
-            }}
-            className="w-20 h-12 flex items-center justify-center cursor-pointer transition-all duration-200 rounded-xl hover:bg-zinc-100/50 active:scale-95 touch-none"
-          >
-            <div className="w-2 h-2 rounded-full bg-zinc-200/40" />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
-
-const SurvivorRow = React.memo(({ survivor, isSurvivor, toggleFollow, followedUsers, navigate, handleVote, selectedRoundId, isHistoryView, isChallengeEnded }: any) => {
-  const [showHearts, setShowHearts] = useState(false);
-  const { handlers: heartsHandlers } = useLongPress(() => setShowHearts(!showHearts), 400);
-
-  const isVideo = survivor.type === 'video' || 
-    survivor.image?.startsWith('data:video/') || 
-    /\.(mp4|mov|webm|ogg)(\?|$)/i.test(survivor.image || '');
-
-  return (
-    <div className="mx-4 mb-4 bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-zinc-100 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 hover:shadow-2xl transition-all text-left">
-      {/* Header Info */}
-      <div className="flex items-center justify-between p-4" {...heartsHandlers}>
-        <div 
-          className="flex items-center space-x-3 cursor-pointer group"
-          onClick={() => navigate(`/user/${survivor.username}`)}
-        >
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
-              <img src={survivor.avatar || "/custom-empty-profile.png"} alt={survivor.username} className="w-full h-full object-cover" />
-            </div>
-            <div className="absolute -bottom-2 -right-2">
-              <img 
-                src="/pley-badge.png" 
-                alt="Status" 
-                className="w-8 h-8 object-contain drop-shadow-md" 
-                style={{ imageRendering: '-webkit-optimize-contrast' }}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-black text-zinc-900 italic tracking-tight">@{survivor.username}</span>
-              <ProfileHeartsToggle isVisible={showHearts} heartClassName="w-7 h-7" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest">
-                {survivor.roundDate ? `${survivor.roundDate} at ${survivor.roundTime}` : survivor.time}
-              </span>
-              {survivor.roundDurationLabel && (
-                <div className="flex items-center gap-1 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
-                  <img src="/duration-alarm.png" alt="" className="h-3 w-auto object-contain" />
-                  <span className="text-[8px] text-purple-600 font-black uppercase tracking-tighter">
-                    {survivor.roundDurationLabel === '2 min' || survivor.roundDurationLabel === '2 mins' ? '24hrs' : survivor.roundDurationLabel}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <button 
-          onClick={() => toggleFollow(survivor.username)}
-          className="transition-all active:scale-90 hover:scale-110"
-        >
-          <img 
-            src={followedUsers.includes(survivor.username) ? "/btn-following.png" : "/btn-follow.png"} 
-            alt="Follow Action" 
-            className="h-8 w-auto object-contain" 
-            style={{ imageRendering: '-webkit-optimize-contrast' }}
-          />
-        </button>
-      </div>
-
-      {/* Main Visual */}
-      <div className="aspect-[4/5] bg-zinc-50 overflow-hidden relative group mx-2 rounded-[1.8rem]">
-        {isVideo ? (
-          <video 
-            src={survivor.image} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 bg-zinc-50" 
-            controls 
-            loop 
-            muted 
-            playsInline
-            autoPlay
-          />
-        ) : (
-          <img src={survivor.image} alt="Survival Proof" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-        )}
-        
-        {/* Status Badge Overlays */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
-           <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-lg border border-white/50 flex items-center gap-2">
-              <img src="/duration-alarm.png" alt="" className="h-4 w-auto object-contain" />
-              <span className="text-[10px] font-black uppercase tracking-wider text-zinc-900">
-                {isHistoryView ? "Legacy Record" : "Live Survivor"}
-              </span>
-           </div>
-        </div>
-
-        <div className="absolute bottom-4 right-4 z-50">
-          {isHistoryView && survivor.madeIt === false ? (
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-2xl shadow-xl border-2 backdrop-blur-md bg-rose-500/90 text-white border-rose-400">
-              Terminated
-            </span>
-          ) : (
-            <img 
-              src="/survived_btn.png" 
-              alt="Survived" 
-              className="h-8 w-auto object-contain drop-shadow-md hover:scale-110 transition-transform active:scale-95 cursor-pointer" 
-              style={{ imageRendering: '-webkit-optimize-contrast' }}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Actions & Insights */}
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {handleVote && (
-              <div className="flex items-center gap-1 bg-zinc-100/80 p-1 rounded-full border border-zinc-200/50">
-                <button 
-                  onClick={() => handleVote(survivor.id, null, 'up')}
-                  className={cn("p-1.5 rounded-full transition-all", survivor.userVote === 'up' ? "bg-white shadow-sm scale-110" : "opacity-40 hover:opacity-100")}
-                >
-                  <ArrowBigUp size={20} fill={survivor.userVote === 'up' ? "#22c55e" : "black"} stroke="none" />
-                </button>
-                <button 
-                  onClick={() => handleVote(survivor.id, null, 'down')}
-                  className={cn("p-1.5 rounded-full transition-all", survivor.userVote === 'down' ? "bg-white shadow-sm scale-110" : "opacity-40 hover:opacity-100")}
-                >
-                  <ArrowBigDown size={20} fill={survivor.userVote === 'down' ? "#ef4444" : "black"} stroke="none" />
-                </button>
-              </div>
-            )}
-
-            <button 
-              onClick={() => navigate(`/post/${survivor.id}`)}
-              className="flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 h-10 w-10 rounded-full transition-all active:scale-90"
-            >
-              <img src="/locator.png" alt="Comment" className="h-5 w-5 object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            </button>
-            
-            <button 
-              onClick={() => navigate(`/chat/${survivor.username}`)}
-              className="flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 h-10 w-10 rounded-full transition-all active:scale-90"
-            >
-              <img src="/nav-chat-v3.png" alt="Message" className="h-6 w-6 object-contain" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="text-right">
-              <p className="text-[7px] font-black text-zinc-300 uppercase tracking-widest leading-none">Vibe Check</p>
-              <p className="text-[10px] font-black text-zinc-900 mt-0.5">ELITE STATUS</p>
-            </div>
-            <img 
-              src="/elite_status_icon.png" 
-              alt="Elite" 
-              className="w-10 h-10 object-contain drop-shadow-sm" 
-            />
-          </div>
-        </div>
-
-        {/* Caption */}
-        <div className="bg-zinc-50/50 rounded-[1.5rem] p-3 border border-zinc-100/50">
-          <p className="text-[12px] leading-relaxed">
-            <span className="font-black italic text-zinc-900 mr-2 hover:text-purple-600 cursor-pointer">@{survivor.username}</span>
-            <span className="text-zinc-600">{survivor.caption}</span>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-const SearchContent = ({ searchQuery, allPosts, navigate }: { searchQuery: string, allPosts: any[], navigate: any }) => {
-  const [remoteUsers, setRemoteUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (searchQuery.length < 1) return;
-    
-    const searchRemote = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url')
-        .ilike('username', `%${searchQuery}%`)
-        .limit(10);
-      
-      if (!error && data) {
-        setRemoteUsers(data.map(u => ({
-          id: u.id,
-          username: u.username,
-          fullName: u.full_name,
-          avatar: u.avatar_url,
-          caption: 'New Citizen', // Fallback for people without posts
-          isRemote: true
-        })));
-      }
-      setLoading(false);
-    };
-
-    const timer = setTimeout(searchRemote, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const localResults = useMemo(() => {
-    return allPosts
-      .filter(post => post.username.toLowerCase().includes(searchQuery.toLowerCase()))
-      .reduce((acc: any[], current) => {
-        if (!acc.find(item => item.username === current.username)) {
-          acc.push(current);
-        }
-        return acc;
-      }, []);
-  }, [allPosts, searchQuery]);
-
-  // Merge results, prioritizing local ones (they have more data)
-  const mergedResults = useMemo(() => {
-    const results = [...localResults];
-    const seenUsernames = new Set(results.map(r => r.username.toLowerCase()));
-    
-    remoteUsers.forEach(ru => {
-      if (!seenUsernames.has(ru.username.toLowerCase())) {
-        results.push(ru);
-      }
-    });
-    return results;
-  }, [localResults, remoteUsers]);
-
-  return (
-    <div className="p-2 space-y-1">
-      {mergedResults.map((user) => (
-        <HomeUserItem 
-          key={user.id} 
-          user={user} 
-          navigate={navigate} 
-          isSearch={true} 
-        />
-      ))}
-      
-      {loading && mergedResults.length === 0 && (
-        <div className="py-12 text-center">
-          <div className="w-8 h-8 rounded-full border-2 border-zinc-200 border-t-zinc-800 animate-spin mx-auto mb-2" />
-          <p className="text-xs text-zinc-400">Searching records...</p>
-        </div>
-      )}
-
-      {!loading && mergedResults.length === 0 && (
-        <div className="pt-8 pb-16 text-center space-y-4">
-          <div className="flex items-center justify-center mx-auto mb-2">
-            <img src="/search-input-icon.png" alt="Not found" className="w-12 h-12 object-contain opacity-30" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-          </div>
-          <p className="text-sm font-bold text-zinc-400 italic px-6">no people found on that place "@{searchQuery}"</p>
-          <p className="text-xs text-zinc-400 px-10">Make sure you spelled the username correctly.</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const Home = () => {
-  const navigate = useNavigate();
-  const {
-    timeLeft, roundTimeLeft, isActive, clickCounts, eliminationCounts, madeItCounts,
-    userSelection, isChallengeEnded, survivors, eliminated,
-    isEliminationRoundActive, setIsEliminationRoundActive,
-    showPills, setShowPills, activeTab, setActiveTab,
-    majorityVariant,
-    unreadMessageCount,
-    setTimeLeft, setIsActive, setClickCounts, setEliminationCounts,
-    setMadeItCounts, setVariantDurations, setVariantFirstClickTime,
-    setUserSelection, setIsChallengeEnded,
-    setSurvivors, addEliminated, startNewChallenge, getVariantDisplayName, userProfile, eliminateSelf,
-    allPosts, setAllPosts, wallPosts, addWallPost,
-    visiblePosts, setVisiblePosts,
-    followedUsers, toggleFollow, isSurvivor, updateHistoryVote,
-    language,
-    t, postsLoading
-  } = useChallenge();
-
-  const handleVote = (survivorId: string | number, roundId: string | null, vote: 'up' | 'down') => {
-    const idNum = typeof survivorId === 'number' ? survivorId : parseInt(survivorId, 10);
-    if (!isNaN(idNum)) {
-      updateHistoryVote(idNum, roundId, vote);
-    }
-  };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default function Home() {
+  // Waitlist State
+  const [email, setEmail] = useState('');
+  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
+  const [waitlistError, setWaitlistError] = useState('');
   
-  // Supabase posts are now managed globally in ChallengeContext
-  const [isInitialSyncDone, setIsInitialSyncDone] = useState(false);
-  useEffect(() => {
-    if (allPosts.length > 0) setIsInitialSyncDone(true);
-  }, [allPosts.length]);
+  // Litepaper Modal State
+  const [litepaperOpen, setLitepaperOpen] = useState(false);
 
-  // Auto-populate visiblePosts from allPosts when the feed is empty but posts exist.
-  // This fixes the bug where a new user logging in sees an empty feed even though
-  // other users have posted content — visiblePosts gets reset on login but allPosts
-  // is correctly loaded from Supabase.
-  useEffect(() => {
-    if (visiblePosts.length === 0 && allPosts.length > 0) {
-      setVisiblePosts(allPosts);
+  // FAQ Accordion State
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // $67DOGE Lock Timer State
+  const [timeLeft, setTimeLeft] = useState({
+    years: 5,
+    days: 264,
+    hours: 12,
+    minutes: 30,
+    seconds: 45
+  });
+
+  // Survival Simulator State
+  const [simulatorPosts, setSimulatorPosts] = useState<MockPost[]>([
+    {
+      id: 'post-1',
+      username: 'survivor_alpha',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&h=100&q=80',
+      content: 'Just reached 12 days on the survival leaderboard! Traditional feeds reward cheap outrage, but here we actually have to fight to keep our words alive. Every post is a battle. Let\'s keep it going.',
+      timeRemaining: '18h 42m',
+      lives: 3
+    },
+    {
+      id: 'post-2',
+      username: 'artisan_maker',
+      avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=100&h=100&q=80',
+      content: 'Hot take: Social media is infinitely more fun when there is actual skin in the game. Knowing this post could vanish in hours if I post garbage makes me think twice about what I share.',
+      timeRemaining: '04h 15m',
+      lives: 2
+    },
+    {
+      id: 'post-3',
+      username: 'chaos_enjoyer',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80',
+      content: 'Here is a totally unhinged thought: If you downvote this, you are proving my point. Come on, try to obliterate me. I dare you. Let the survival games begin!',
+      timeRemaining: '11h 59m',
+      lives: 1
     }
-  }, [allPosts, visiblePosts.length, setVisiblePosts]);
+  ]);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [simulatorFeedText, setSimulatorFeedText] = useState('');
 
-
-
-  // New state for upload modal
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [rawFile, setRawFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [fileType, setFileType] = useState<'image' | 'video'>('image');
-  const [captionText, setCaptionText] = useState('');
-  const [showMustache, setShowMustache] = useState(true);
-  const { setShowBottomNav, showBottomNav } = useOutletContext<{ setShowBottomNav: React.Dispatch<React.SetStateAction<boolean>>; showBottomNav: boolean }>();
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const isVideo = file.type.startsWith('video/');
-      setFileType(isVideo ? 'video' : 'image');
-      setRawFile(file);
-
-      // Instantly preview using an object URL instead of freezing the UI with a huge base64 string
-      const objectUrl = URL.createObjectURL(file);
-      setSelectedFile(objectUrl);
-      setUploadModalOpen(true);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleCloseModal = () => {
-    setUploadModalOpen(false);
-    setSelectedFile(null);
-    setRawFile(null);
-    setCaptionText('');
-    setIsUploading(false);
-  };
-
-  const handleCreatePost = () => {
-    if (!selectedFile || !rawFile) return;
-    setIsUploading(true);
-
-    const caption = captionText || (fileType === 'video' ? 'Just uploaded a video! 🎥' : 'Just uploaded a photo! 📸');
-
-    // Save the raw File and local preview before clearing modal state
-    const currentRawFile = rawFile;
-    const currentSelectedFile = selectedFile;
-    
-    // Generate a valid UUID v4 robustly (handles insecure contexts where crypto.randomUUID is undefined)
-    const generateId = () => {
-      const prefix = 'opt-';
-      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-        return prefix + crypto.randomUUID();
-      }
-      return prefix + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    };
-    const optimisticId = generateId();
-
-    // Close modal instantly for snappy UX, but keep isUploading true
-    setUploadModalOpen(false);
-    setSelectedFile(null);
-    setRawFile(null);
-    setCaptionText('');
-
-    // Optimistically show in local feed using blob preview with real UUID
-    createLocalPostFallback(caption, currentSelectedFile, optimisticId);
-
-    // Upload to Storage then insert DB row in background
-    (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session?.user) {
-          alert('You must be logged in to upload content.');
-          // Remove the optimistic post since we are not logged in
-          setAllPosts(prev => prev.filter(p => p.id !== optimisticId));
-          setVisiblePosts(prev => prev.filter(p => p.id !== optimisticId));
-          return;
-        }
-
-        // Step 1: Upload file to Supabase Storage
-        const { url: storageUrl, error: uploadError } = await uploadPostMedia(session.user.id, currentRawFile);
-
-        if (uploadError || !storageUrl) {
-          console.error('Storage upload failed:', uploadError);
-          alert('Upload failed: ' + (uploadError?.message || 'Could not upload file'));
-          // Remove the optimistic post since upload failed
-          setAllPosts(prev => prev.filter(p => p.id !== optimisticId));
-          setVisiblePosts(prev => prev.filter(p => p.id !== optimisticId));
-          return;
-        }
-
-        // Step 2: Insert post row with public storage URL (Do NOT pass optimisticId, let Supabase auto-increment the ID)
-        const { data: realPost, error: postError } = await createPost(session.user.id, caption, storageUrl);
-
-        if (postError) {
-          console.error('Failed to create post:', postError);
-          alert('Post failed: ' + postError.message);
-          
-          // Remove the optimistic post since it failed
-          setAllPosts(prev => prev.filter(p => p.id !== optimisticId));
-          setVisiblePosts(prev => prev.filter(p => p.id !== optimisticId));
-          return;
-        }
-
-        if (realPost) {
-          // Swap out the optimistic post for the real post immediately so we don't get duplicates
-          const formattedReal = formatPostForUI(realPost);
-          
-          setAllPosts(prev => {
-            // If realtime already inserted the real post, just delete the optimistic one
-            if (prev.some(p => String(p.id) === String(realPost.id))) {
-              return prev.filter(p => String(p.id) !== String(optimisticId));
-            }
-            return prev.map(p => String(p.id) === String(optimisticId) ? formattedReal : p);
-          });
-          
-          setVisiblePosts(prev => {
-            if (prev.some(p => String(p.id) === String(realPost.id))) {
-              return prev.filter(p => String(p.id) !== String(optimisticId));
-            }
-            return prev.map(p => String(p.id) === String(optimisticId) ? formattedReal : p);
-          });
-        }
-      } catch (err: any) {
-        console.error('Error during post creation background task:', err);
-        alert('An unexpected error occurred during upload: ' + (err?.message || err));
-        // Remove the optimistic post since it failed
-        setAllPosts(prev => prev.filter(p => p.id !== optimisticId));
-        setVisiblePosts(prev => prev.filter(p => p.id !== optimisticId));
-      } finally {
-        setIsUploading(false); // Only set false when completely finished
-      }
-    })();
-  };
-
-  // Prevent user from refreshing and cancelling the background upload
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isUploading) {
-        e.preventDefault();
-        e.returnValue = ''; // Shows standard browser warning
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isUploading]);
-
-  const createLocalPostFallback = (caption: string, imageUrl: string, id: string) => {
-    const localPost = {
-      id: id,
-      username: userProfile?.username || 'Guest',
-      avatar: userProfile?.avatar || '/custom-empty-profile.png',
-      image: imageUrl,
-      type: fileType,
-      caption,
-      likes: 0,
-      time: 'Just now',
-      createdAt: new Date().toISOString(),
-      comments: []
-    };
-    setAllPosts(prev => [localPost, ...prev]);
-    setVisiblePosts(prev => [localPost, ...prev]);
-  };
-
-  // Calculate exact unswiped posts during render
-  const swipedIds = useMemo(() => new Set([
-    ...survivors.map((s: any) => s.id),
-    ...eliminated.map((e: any) => e.id)
-  ]), [survivors, eliminated]);
-
-  const eliminatedUsernames = useMemo(() => new Set(
-    eliminated.map((e: any) => e.username)
-  ), [eliminated]);
-
-  const unswipedPosts = useMemo(() => 
-    allPosts.filter(p => !swipedIds.has(p.id) && !eliminatedUsernames.has(p.username)),
-  [allPosts, swipedIds, eliminatedUsernames]);
-
-  // Deterministic feed synchronization: Ensures the feed always matches new posts minus swiped ones
-  useEffect(() => {
-    // If challenge ended, feed stays empty
-    if (isChallengeEnded) {
-      if (visiblePosts.length > 0) setVisiblePosts([]);
+  // Handle Waitlist Submission
+  const handleWaitlistSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      setWaitlistError('Please enter a valid email address.');
       return;
     }
     
-    if (allPosts.length === 0) return;
-
-    // Fast and reliable comparison of actual feed content to avoid unnecessary re-renders
-    // while ensuring any new or removed posts instantly reflect.
-    const visibleSimplified = visiblePosts.map((p: any) => `${p.id}-${p.avatar}-${p.username}-${p.isTraitorGlobal}-${p.globalLives}-${p.comments?.length || 0}`);
-    const unswipedSimplified = unswipedPosts.map((p: any) => `${p.id}-${p.avatar}-${p.username}-${p.isTraitorGlobal}-${p.globalLives}-${p.comments?.length || 0}`);
+    // Save to localStorage
+    const waitlist = JSON.parse(localStorage.getItem('ripit_waitlist') || '[]');
+    waitlist.push({ email, date: new Date().toISOString() });
+    localStorage.setItem('ripit_waitlist', JSON.stringify(waitlist));
     
-    if (JSON.stringify(visibleSimplified) !== JSON.stringify(unswipedSimplified)) {
-      setVisiblePosts(unswipedPosts);
-    }
-  }, [unswipedPosts, visiblePosts, isChallengeEnded]);
+    setWaitlistError('');
+    setWaitlistSubmitted(true);
+    setEmail('');
+  };
 
-
-  const [showInfo, setShowPillsInfo] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-
-  // Hide pills when navigating away
+  // $67DOGE 6-Year Lock Countdown Timer
   useEffect(() => {
-    return () => {
-      setShowPills(false);
-      setActiveTab(null);
+    // Lock start: April 6, 2026.
+    // Lock end: April 6, 2032 (6 years later)
+    const targetDate = new Date('2032-04-06T17:03:02Z').getTime();
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ years: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const seconds = Math.floor((difference / 1000) % 60);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const daysTotal = Math.floor(difference / (1000 * 60 * 60 * 24));
+      
+      const years = Math.floor(daysTotal / 365.25);
+      const days = Math.floor(daysTotal % 365.25);
+
+      setTimeLeft({ years, days, hours, minutes, seconds });
     };
-  }, [setShowPills, setActiveTab]);
 
-  // Add custom animation style
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-3px); }
-        100% { transform: translateY(0px); }
-      }
-      @keyframes slideIn {
-        from { opacity: 0; transform: translateX(-5px); }
-        to { opacity: 1; transform: translateX(0); }
-      }
-      .animate-float {
-        animation: float 3s ease-in-out infinite;
-      }
-      .animate-slide-in {
-        animation: slideIn 0.3s ease-out forwards;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  // End challenge if all posts are judged or timer runs out
-  // Navigate to results when challenge ends
-  // REMOVED auto-navigation to allow viewing end-screen on Home
-
-
-  const handleTabClick = (tab: string) => {
-    if (timeLeft > 0) {
-      if (userSelection) return; // Locked
-      
-      // Immediate submission for active challenge
-      setClickCounts(prev => ({
-        ...prev,
-        [tab]: prev[tab] + 1
-      }));
-
-      setVariantFirstClickTime(prev => {
-        if (!prev[tab]) return { ...prev, [tab]: Date.now() };
-        return prev;
-      });
-      
-      setVariantDurations(prev => {
-        if (!prev[tab]) return { ...prev, [tab]: timeLeft };
-        return prev;
-      });
-
-      setUserSelection(tab);
-      setShowPills(false);
-    } else {
-      setActiveTab(activeTab === tab ? null : tab);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-
-
-  const handleDeletePost = (postId: number) => {
-    try {
-      const activeMode = userSelection || majorityVariant;
-      
-      const eliminatedPost = visiblePosts.find(post => post.id === postId);
-      if (eliminatedPost) {
-        if (eliminatedPost.username === userProfile?.username) {
-          eliminateSelf();
-          return;
+  // Simulator downvote trigger
+  const handleDownvote = (id: string) => {
+    setSimulatorPosts(prev => 
+      prev.map(post => {
+        if (post.id === id) {
+          const nextLives = Math.max(0, post.lives - 1);
+          return { ...post, lives: nextLives };
         }
-
-        addEliminated({
-          id: eliminatedPost.id,
-          username: eliminatedPost.username || 'unknown',
-          avatar: eliminatedPost.avatar || '/custom-empty-profile.png',
-          image: eliminatedPost.image || '',
-          caption: eliminatedPost.caption || '',
-          time: eliminatedPost.time || '',
-          comments: eliminatedPost.comments || [],
-          madeIt: false
-        });
-        
-        // Wipe out all posts from this user immediately
-        setVisiblePosts(prev => prev.filter(post => post.username !== eliminatedPost.username));
-      } else {
-        setVisiblePosts(prev => prev.filter(post => post.id !== postId));
-      }
-      
-      // Track eliminations for the current active mode
-      if (activeMode && Object.prototype.hasOwnProperty.call(eliminationCounts, activeMode)) {
-        setEliminationCounts(prev => ({
-          ...prev,
-          [activeMode]: (prev[activeMode] || 0) + 1
-        }));
-      }
-    } catch (err) {
-      console.error('Error in handleDeletePost:', err);
-      // Fail-safe: remove the post by id to prevent stuck state
-      setVisiblePosts(prev => prev.filter(post => post.id !== postId));
-    }
+        return post;
+      })
+    );
   };
 
-  const handlePassPost = (postId: number) => {
-    const activeMode = userSelection || majorityVariant;
+  // Simulator post creation
+  const handleCreateMockPost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPostContent.trim()) return;
 
-    const passedPost = visiblePosts.find(p => p.id === postId);
-    setVisiblePosts(prev => prev.filter(post => post.id !== postId));
-    
-    // Add to survivors list if they passed
-    if (passedPost) {
-      setSurvivors(prev => {
-        const existingIds = new Set(prev.map(s => s.id));
-        if (existingIds.has(passedPost.id)) return prev;
-        return [...prev, { 
-          id: passedPost.id,
-          username: passedPost.username, 
-          avatar: passedPost.avatar,
-          image: passedPost.image,
-          caption: passedPost.caption,
-          time: passedPost.time,
-          comments: passedPost.comments,
-          madeIt: true
-        }];
-      });
-    }
+    const newPost: MockPost = {
+      id: `post-${Date.now()}`,
+      username: 'you_the_creator',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80',
+      content: newPostContent.trim(),
+      timeRemaining: '24h 00m',
+      lives: 3,
+      isNew: true
+    };
 
-    // Track "made it" for the current active mode
-    if (activeMode && Object.prototype.hasOwnProperty.call(madeItCounts, activeMode)) {
-      setMadeItCounts(prev => ({
-        ...prev,
-        [activeMode]: (prev[activeMode] || 0) + 1
-      }));
-    }
+    setSimulatorPosts([newPost, ...simulatorPosts]);
+    setNewPostContent('');
+    setSimulatorFeedText('Post uploaded! Try downvoting it to see the survival system in action.');
+    setTimeout(() => setSimulatorFeedText(''), 4000);
   };
+
+  const faqs = [
+    {
+      q: "What happens when a post is obliterated?",
+      a: "When a post loses all 3 lives or fails to survive its 24-hour challenge, it is permanently deleted from the database. Nothing is archived, nothing is recoverable, and it can never be restored by anyone—not even the team."
+    },
+    {
+      q: "Can an entire account be obliterated?",
+      a: "Yes. Under Ripit's survival rules, if an account repeatedly breaches survival conditions or fails to maintain minimum platform standards, the account itself enters elimination status. Once permanently obliterated, all posts, history, custom profiles, and credentials are swept out completely."
+    },
+    {
+      q: "What is $67DOGE?",
+      a: "$67DOGE is the official long-term utility token of the Ripit ecosystem. While Ripit and the $67DOGE project are separate, independent organizations, they share a permanent strategic partnership to connect their products, share utilities, and build value."
+    },
+    {
+      q: "How is the 91% lock on $67DOGE verified?",
+      a: "Over 91% of the total token supply (861,169,396 $67DOGE) is locked inside an on-chain smart contract for six years. The lock is public and completely transparent. Anyone can verify this on StakePoint and Solscan using the official contracts."
+    },
+    {
+      q: "Are there any upvotes or likes?",
+      a: "No. Ripit is built differently. Traditional platforms reward mindless attention, whereas Ripit rewards survival. The community does not 'like' your post; they decide whether it deserves to remain. Downvotes are the only feedback mechanism, meaning every post carries real stakes."
+    }
+  ];
 
   return (
-    <div className="flex flex-col relative h-full">
-      {/* Upload Post Modal */}
-      {uploadModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
-          <div 
-            className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
-            onClick={handleCloseModal}
-          />
-          <div className="bg-white w-full max-w-md max-h-[90vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50 shrink-0">
-              <img 
-                src="/modal-new-post.png" 
-                alt={t('home_upload_modal_title')} 
-                className="h-6 w-auto object-contain ml-2"
-                style={{ imageRendering: '-webkit-optimize-contrast' }}
-              />
-              <button 
-                onClick={handleCloseModal}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-900 transition-all"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-4 space-y-4 overflow-y-auto flex-1">
-              {/* Media Preview */}
-              <div id="preview-container" className="aspect-square w-full bg-zinc-50 rounded-2xl flex items-center justify-center overflow-hidden relative min-h-[300px]">
-                {!selectedFile ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
-                    <span className="text-white/30 text-xs">Loading preview...</span>
-                  </div>
-                ) : fileType === 'video' ? (
-                  <video 
-                    src={selectedFile} 
-                    className="w-full h-full object-contain relative z-20" 
-                    controls 
-                    autoPlay 
-                    muted 
-                    loop 
-                  />
-                ) : (
-                  <img 
-                    src={selectedFile} 
-                    alt="Preview" 
-                    className="w-full h-full object-contain relative z-20" 
-                  />
-                )}
-              </div>
+    <div className="relative min-h-screen bg-white text-zinc-900 overflow-hidden font-sans">
+      
+      {/* Background Radial Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-red-100/50 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[40%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-yellow-100/30 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-red-100/30 blur-[130px] pointer-events-none" />
 
-              {/* Caption Input */}
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-zinc-200 bg-zinc-50">
-                  <img 
-                    src={userProfile?.avatar || "/custom-empty-profile.png"} 
-                    alt={userProfile?.username || "Me"} 
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-                <textarea
-                  placeholder={t('home_upload_caption_placeholder')}
-                  value={captionText}
-                  onChange={(e) => setCaptionText(e.target.value)}
-                  className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 min-h-[100px] resize-none"
-                />
-              </div>
-            </div>
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
 
-            {/* Action Buttons */}
-            <div className="p-4 border-t border-zinc-100 bg-white rounded-b-3xl shrink-0 flex items-center justify-end gap-4">
-              <button
-                onClick={handleCloseModal}
-                disabled={isUploading}
-                className="px-6 py-2 rounded-full text-sm font-bold text-zinc-400 hover:bg-zinc-100 transition-all disabled:opacity-50"
-              >
-                {t('home_upload_cancel')}
-              </button>
-              <button
-                onClick={handleCreatePost}
-                disabled={isUploading}
-                className="transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center relative min-w-[80px] h-9"
-              >
-                {isUploading ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/40 rounded-xl backdrop-blur-[2px] z-10">
-                    <div className="w-5 h-5 rounded-full border-[3px] border-red-500/20 border-t-red-600 animate-spin shadow-sm" />
-                  </div>
-                ) : null}
-                <img 
-                  src="/btn-post-modal.png" 
-                  alt={t('home_upload_post')} 
-                  className={cn(
-                    "h-9 w-auto object-contain drop-shadow-md transition-all duration-300", 
-                    isUploading && "grayscale opacity-80"
-                  )}
-                  style={{ imageRendering: '-webkit-optimize-contrast' }}
-                />
-              </button>
-            </div>
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-50 w-full border-b border-zinc-100 bg-white/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <img src="/header_logo.png" alt="Ripit" className="h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+          </div>
+
+          <nav className="hidden md:flex items-center space-x-8 text-sm font-semibold text-zinc-500">
+            <a href="#what-is-ripit" className="hover:text-red-600 transition-colors">What is it?</a>
+            <a href="#why-ripit" className="hover:text-red-600 transition-colors">Why Ripit?</a>
+            <a href="#how-it-works" className="hover:text-red-600 transition-colors">How It Works</a>
+            <a href="#survival" className="hover:text-red-600 transition-colors">Survival</a>
+            <a href="#token" className="hover:text-red-600 transition-colors">$67DOGE</a>
+            <a href="#transparency" className="hover:text-red-600 transition-colors">Lock</a>
+            <a href="#faq" className="hover:text-red-600 transition-colors">FAQ</a>
+          </nav>
+
+          <div className="flex items-center space-x-4">
+            <a href="#waitlist" className="transition-all active:scale-95 hover:opacity-80">
+              <img src="/rip7.png" alt="Waitlist" className="h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            </a>
           </div>
         </div>
-      )}
-
-      {/* Info Modal */}
-      {showInfo && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-          <div 
-            className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
-            onClick={() => setShowPillsInfo(false)}
-          />
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Decorative doodle background pattern — ultra-faint, WhatsApp-style */}
-            <div 
-              className="absolute inset-0 pointer-events-none z-0"
-              style={{
-                backgroundImage: "url('/solo.png')",
-                backgroundSize: '340px auto',
-                backgroundRepeat: 'repeat',
-                backgroundPosition: '10px 8px',
-                mixBlendMode: 'multiply',
-                opacity: 0.10,
-                transform: 'rotate(-2deg) scale(1.2)',
-                transformOrigin: 'center center',
-              }}
-            />
-            <div className="p-6 border-b border-zinc-100/50 flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 flex items-center justify-center">
-                  <img 
-                    src="/nav-news-v3.png" 
-                    alt="" 
-                    className="w-full h-full object-contain" 
-                    style={{ imageRendering: '-webkit-optimize-contrast' }}
-                  />
-                </div>
-                <img src="/ripit-rules-header.png" alt="Rip It Rules" className="h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-              </div>
-              <button 
-                onClick={() => setShowPillsInfo(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-900 transition-all"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 flex flex-col gap-6 max-h-[70vh] overflow-y-auto relative z-10">
-              <div className="flex flex-col gap-4 text-left">
-                <p className="text-base text-zinc-900 leading-relaxed font-bold italic border-l-4 border-red-600 pl-4 py-2 bg-zinc-50 rounded-r-2xl">
-                  Ripit — the social battlefield where every rivalry has consequences.
-                </p>
-                <p className="text-sm text-zinc-700 leading-relaxed font-medium">
-                  Make enemies. Hunt profiles. Drain their three hearts. When the final heart falls, that account is permanently wiped from the world of Ripit.
-                </p>
-                <p className="text-sm text-zinc-700 leading-relaxed font-medium">
-                  No revives. No resets. No second chances.
-                </p>
-                <p className="text-sm text-zinc-700 leading-relaxed font-bold mt-1">
-                  You don't just unfollow your rivals.
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-base text-red-600 font-black uppercase tracking-wider">
-                    You
-                  </span>
-                  <img 
-                    src="/header-logo-hydrant.png" 
-                    alt="Hydrant" 
-                    className="h-11 w-auto object-contain" 
-                  />
-                  <img 
-                    src="/header-logo-text.png" 
-                    alt="RipIt" 
-                    className="h-6 w-auto object-contain mt-0.5" 
-                    style={{ imageRendering: '-webkit-optimize-contrast' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-zinc-50/80 border-t border-zinc-100 flex justify-center relative z-10">
-              <button 
-                onClick={() => setShowPillsInfo(false)}
-                className="transition-all hover:scale-105 active:scale-95"
-              >
-                <img src="/understood-button.png" alt="Understood" className="h-[48px] w-auto object-contain drop-shadow-sm" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-zinc-100 flex flex-col">
-        <div className="px-4 py-3 min-h-[4rem] flex items-center justify-between relative overflow-hidden bg-[#F9F9FB]">
-          {/* Decorative background pattern */}
-          <div 
-            className="absolute inset-0 pointer-events-none z-0"
-            style={{
-              backgroundImage: "url('/doodle-pattern-colored.png')",
-              backgroundSize: 'auto 100%',
-              backgroundRepeat: 'repeat-x',
-              backgroundPosition: 'center',
-              opacity: 0.1, // 8-10% opacity
-            }}
-          />
-          
-          <div className="flex items-center gap-0 relative z-10">
-            <button 
-              onClick={() => setShowMustache(!showMustache)}
-              className="transition-all active:scale-95 flex items-center gap-0"
-              title="Toggle Menu"
-            >
-              <img src="/header-logo-hydrant.png" alt="Logo" className="h-[60px] w-auto object-contain" />
-            </button>
-            <Link 
-              to="/" 
-              className="transition-all active:scale-95"
-              onClick={() => {
-                setShowBottomNav(prev => !prev);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <img 
-                src="/header-logo-text.png" 
-                alt="RipIt" 
-                className="h-6 w-auto object-contain ml-0 mt-1" 
-                style={{ imageRendering: '-webkit-optimize-contrast' }}
-              />
-            </Link>
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <button 
-              onClick={() => {
-                setActiveTab('pley');
-                setShowPills(!showPills);
-              }}
-              className="relative flex items-center justify-center transition-opacity hover:opacity-80 active:scale-95 w-[44px] h-[44px]"
-            >
-              <img 
-                key={showPills ? 'mustache-active' : 'mustache-inactive'}
-                src={showPills ? "/nav-mustache-active.png" : "/nav-mustache.png"}
-                alt="Create" 
-                className="h-[44px] w-[44px] object-contain transition-all duration-200 animate-pop-in"
-                style={{ imageRendering: '-webkit-optimize-contrast', transform: 'translateZ(0)' }}
-              />
-            </button>
-            <button 
-              onClick={() => navigate('/chat')}
-              className="text-zinc-700 hover:text-zinc-400 transition-colors relative"
-            >
-              <img src="/nav-chat-v3.png" alt="Chat" className="h-[38px] w-[38px] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-              {unreadMessageCount > 0 && (
-                <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-black text-white border-2 border-white animate-pop-in">
-                  {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-                </div>
-              )}
-            </button>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="text-zinc-700 hover:text-zinc-400 transition-colors"
-            >
-              <img src="/nav-camera-v3.png" alt="Camera" className="h-[38px] w-[38px] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              style={{ display: 'none' }} 
-              accept="image/*,video/*" 
-            />
-            <button 
-              className="flex items-center justify-center transition-all active:scale-90 hover:opacity-70"
-              onClick={() => setShowPillsInfo(true)}
-            >
-              <img src="/nav-news-v3.png" alt="News" className="h-[38px] w-[38px] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            </button>
-            <button 
-              className="text-zinc-700 transition-all active:scale-90 hover:opacity-70"
-              onClick={() => {
-                setShowSearchModal(true);
-                setShowBottomNav(false);
-              }}
-            >
-              <img src="/header-search-v3.png" alt="Search" className="h-[26px] w-[26px] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            </button>
-          </div>
-        </div>
-
-        {/* Search Modal */}
-        {showSearchModal && (
-          <div className="fixed inset-0 z-[120] flex items-start justify-center pt-10 px-4">
-            <div 
-              className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm"
-              onClick={() => {
-                setShowSearchModal(false);
-                setShowBottomNav(true);
-                setSearchQuery('');
-              }}
-            />
-            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in slide-in-from-top-4 duration-300">
-              <div className="p-4 border-b border-zinc-100 flex items-center gap-2">
-                <img 
-                  src="/search-input-icon.png" 
-                  alt="" 
-                  className="h-7 w-auto object-contain opacity-50" 
-                  style={{ imageRendering: '-webkit-optimize-contrast' }}
-                />
-                <div className="flex-1 relative flex items-center">
-                  <input 
-                    autoFocus
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-transparent border-none outline-none text-zinc-900 font-medium placeholder:text-transparent"
-                  />
-                  {!searchQuery && (
-                    <img 
-                      src="/search-placeholder.png" 
-                      alt="" 
-                      className="absolute left-0 top-1/2 -translate-y-1/2 h-[35px] w-auto object-contain pointer-events-none opacity-40 ml-1" 
-                      style={{ imageRendering: '-webkit-optimize-contrast' }}
-                    />
-                  )}
-                </div>
-                <button 
-                  onClick={() => {
-                    setShowSearchModal(false);
-                    setShowBottomNav(true);
-                    setSearchQuery('');
-                  }}
-                  className="transition-all active:scale-95 hover:opacity-70 px-2"
-                >
-                  <img src="/search-cancel-text.png" alt="Cancel" className="h-[20px] w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-                </button>
-              </div>
-
-              <div className="max-h-[60vh] overflow-y-auto">
-                {searchQuery ? (
-                  <SearchContent searchQuery={searchQuery} allPosts={allPosts} navigate={navigate} />
-                ) : (
-                  <div className="p-8 text-center space-y-4">
-                    <img src="/search-chair-final.png" alt="Empty Chair" className="w-32 h-auto mx-auto object-contain mb-4" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-                    <div className="space-y-1">
-                      <img src="/search-header-text.png" alt="Find people" className="h-10 w-auto mx-auto object-contain mb-2" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-                      <p className="text-sm text-zinc-400">Type a username to search through the elite who survived the Rip It rounds.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Setup Container - Simplified for Pley-only */}
-        {showPills && (
-          <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="bg-zinc-50/50 rounded-[2rem] border border-zinc-100 p-4 space-y-5 shadow-sm">
-              {/* Asset Section */}
-              <div className="flex items-center justify-center relative w-full h-[52px]">
-                <img src="/pley-challenge-logo.png" alt="Challenge House" className="h-[48px] w-auto object-contain absolute left-0 opacity-80" />
-                <img src="/pley-challenge-car.png" alt="Challenge Car" className="h-[52px] w-auto object-contain relative z-10" />
-                <img src="/pley-challenge-garage.png" alt="Challenge Garage" className="h-[50px] w-auto object-contain absolute right-0 opacity-80" />
-              </div>
-
-              <div className="h-px w-full bg-zinc-100/80" />
-
-              {/* Start Button at Top for Visibility */}
-              <div className="flex flex-col items-center justify-center w-full">
-                <button
-                  onClick={() => {
-                    if (isEliminationRoundActive) return;
-                    startNewChallenge();
-                    setUserSelection('pley');
-                    setClickCounts(prev => ({
-                      ...prev,
-                      ['pley']: (prev['pley'] || 0) + 1
-                    }));
-                    setVisiblePosts(allPosts);
-                  }}
-                  disabled={isEliminationRoundActive}
-                  className={cn(
-                    "mt-2 transition-transform flex items-center justify-center",
-                    !isEliminationRoundActive && "hover:scale-105 active:scale-95"
-                  )}
-                >
-                  <img 
-                    src={isEliminationRoundActive ? "/btn-submitted.png" : "/btn-start-elimination.png"}
-                    alt={isEliminationRoundActive ? "Submitted" : "Start Elimination"}
-                    className="h-10 w-auto object-contain drop-shadow-md" 
-                    style={{ imageRendering: '-webkit-optimize-contrast' }}
-                  />
-                </button>
-                {isEliminationRoundActive && (
-                  <div className="text-[10px] font-black text-rose-600 font-mono mt-1.5 flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded border border-rose-100 shadow-sm animate-pulse">
-                    <span>ROUND ENDS IN:</span>
-                    <span>{(() => {
-                      const m = Math.floor(roundTimeLeft / 60);
-                      const s = roundTimeLeft % 60;
-                      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-                    })()}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Automated Cycle UI */}
-              {activeTab && (
-                <div className="space-y-4 pt-2">
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Calendar Card */}
-                    <div className="bg-white rounded-2xl p-4 border border-zinc-100 shadow-sm flex flex-col items-center justify-center space-y-2 group hover:border-purple-200 transition-colors">
-                      <div className="w-12 h-12 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <img src="/calendar-pizza.png" alt="Calendar" className="w-[44px] h-[44px] object-contain" />
-                      </div>
-                      <div className="text-center">
-                        <span className="text-[10px] font-black text-zinc-900 uppercase tracking-widest block">{t('home_calendar')}</span>
-                        <span className="text-sm font-black text-zinc-900 leading-tight">
-                          {new Date().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-GB', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric' 
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Timer Card */}
-                    <div className="bg-white rounded-2xl p-4 border border-zinc-100 shadow-sm flex flex-col items-center justify-center space-y-2 relative overflow-hidden group hover:border-purple-200 transition-colors">
-                      <div className="absolute top-0 right-0 w-16 h-16 bg-purple-50 rounded-full -mr-8 -mt-8" />
-                      <div className="w-16 h-16 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
-                        <img src="/reshuffle-keys.svg" alt="Reshuffle" className="w-[56px] h-[56px] object-contain" />
-                      </div>
-                      <div className="text-center relative z-10">
-                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block">{t('home_next_reshuffle')}</span>
-                        <span className="text-sm font-black text-zinc-900 leading-tight font-mono mt-0.5 block">
-                          {formatTime(timeLeft)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="flex items-center justify-center gap-4">
-                      <img src="/alligator-logo.png" alt="Croc" className="h-[64px] w-auto object-contain mt-8" />
-                      <img src="/worse-than-death.png" alt="Worse Than Death" className="h-[64px] w-auto object-contain" />
-                    </div>
-                    
-                    <div className="flex justify-center items-center gap-8 -mt-2">
-                      <div className="flex flex-col items-center">
-                        <span className="text-xl font-black text-rose-600">
-                          {Object.values(eliminationCounts).reduce((a, b) => a + b, 0)}
-                        </span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Eliminated</span>
-                      </div>
-                      <div className="w-px h-6 bg-zinc-200" />
-                      <div className="flex flex-col items-center">
-                        <span className="text-xl font-black text-green-600">
-                          {survivors.length}
-                        </span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Survived</span>
-                      </div>
-                    </div>
-
-                    <div className="h-px w-full bg-zinc-100/80" />
-
-                    <div className="flex items-center justify-center w-full px-6 text-center">
-                      <p className="text-[11px] font-bold text-zinc-500 italic leading-relaxed">
-                        Round reshuflled automatically at midnight.<br/>All survivors archived to Hall of Fame.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* Main Content */}
-      <main className={`flex-1 overflow-y-auto ${showBottomNav ? 'pb-20' : 'pb-0'}`}>
-        {postsLoading && allPosts.length === 0 ? (
-          /* ── Loading state ── */
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-            <div className="w-8 h-8 rounded-full border-4 border-zinc-200 border-t-zinc-900 animate-spin" />
-            <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">Loading...</p>
+      {/* Main Container */}
+      <main className="relative max-w-7xl mx-auto px-6 pt-12 pb-24 space-y-36">
+
+        {/* Hero Section */}
+        <section className="relative flex flex-col items-center justify-center text-center pt-8 md:pt-16 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-top-6 duration-700">
+          
+          {/* Logo Brand Graphic */}
+          <div className="relative group cursor-default flex flex-row items-center justify-center gap-6 -translate-x-8">
+            <img
+              src="/ripit2.png"
+              alt="Ripit Hydrant"
+              className="h-80 md:h-[480px] w-auto object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500 shrink-0"
+              style={{ imageRendering: '-webkit-optimize-contrast' }}
+            />
+            <img
+              src="/ripit.png"
+              alt="Ripit"
+              className="h-32 md:h-48 w-auto object-contain"
+              style={{ imageRendering: '-webkit-optimize-contrast' }}
+            />
           </div>
-        ) : isChallengeEnded ? (
-          /* ── Universal Selection Ended / Victory Screen ── */
-          <div className="flex-1 flex flex-col items-center justify-center min-h-[80vh] animate-in fade-in zoom-in duration-1000 px-6 text-center pb-20 relative overflow-hidden">
-            {/* Background Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-purple-100/30 blur-[100px] rounded-full -z-10" />
+
+          <div className="space-y-4">
+            <img 
+              src="/uio.png" 
+              alt="Social Media with Stakes" 
+              className="h-16 md:h-28 w-auto object-contain mx-auto"
+              style={{ imageRendering: '-webkit-optimize-contrast' }}
+            />
+            <p className="text-lg md:text-2xl text-zinc-600 font-medium max-w-2xl mx-auto">
+              Every downvote matters. Every post has something to lose.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-lg mx-auto pt-4">
+            <a 
+              href="#waitlist"
+              className="hover:scale-[1.03] active:scale-[0.98] transition-transform"
+            >
+              <img src="/gee1.png" alt="Join Waitlist" className="h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            </a>
             
-            <div className="space-y-6 mb-12 animate-in slide-in-from-top-12 duration-1000">
-              <div className="relative inline-block">
-                <img 
-                  src="/the-end.png" 
-                  alt={t('home_the_end')} 
-                  className="h-24 w-auto object-contain mx-auto relative z-10" 
-                  style={{ imageRendering: '-webkit-optimize-contrast' }}
-                />
-                <div className="absolute -inset-4 bg-white/50 blur-xl rounded-full -z-10" />
+            <button 
+              onClick={() => setLitepaperOpen(true)}
+              className="hover:scale-[1.03] active:scale-[0.98] transition-transform bg-transparent border-0 p-0"
+            >
+              <img src="/gee2.png" alt="Read Litepaper" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            </button>
+          </div>
+
+          {/* Social Proof Stats Badge */}
+          <div className="pt-8 flex flex-wrap items-center justify-center gap-6 text-zinc-500 text-xs md:text-sm font-semibold">
+            <div className="flex items-center space-x-2 bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-200/60">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              <span>100% Obliterative</span>
+            </div>
+            <div className="flex items-center space-x-2 bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-200/60">
+              <span>91%+ Locked Token Supply</span>
+            </div>
+            <div className="flex items-center space-x-2 bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-200/60">
+              <span>No Likes. Zero Upvotes.</span>
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* What is Ripit? & Why Ripit? */}
+        <section id="what-is-ripit" className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+          
+          {/* What is Ripit Card */}
+          <div className="relative group flex flex-col justify-between bg-white border border-zinc-200 hover:border-zinc-300 p-8 rounded-[2rem] glow-red transition-all duration-300 shadow-sm">
+            <div className="space-y-6">
+
+              <div className="inline-flex items-center justify-center">
+                <img src="/ico_skull.png" alt="skull" className="w-20 h-20 object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               </div>
-              
-              <div className="flex flex-col items-center gap-4">
-                <div className="h-[3px] w-32 bg-gradient-to-r from-transparent via-zinc-900 to-transparent" />
-                <h2 className="text-3xl font-black text-zinc-900 uppercase tracking-tighter italic">
-                  Selection Complete
-                </h2>
-                <p className="text-zinc-400 font-black uppercase tracking-[0.4em] text-[10px]">
-                  You Survived the Universal Rounds
+              <img src="/rip1.png" alt="What is Ripit?" className="h-12 md:h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
+                <p>
+                  Ripit is a social platform where every post has something to lose.
+                </p>
+                <p>
+                  Every post begins with <strong className="text-red-600">3 lives</strong> and enters a <strong className="text-zinc-900">24-hour survival challenge</strong>.
+                </p>
+                <p>
+                  Unlike traditional social media, there are no likes or upvotes. The community decides a post's fate through downvotes.
+                </p>
+                <p>
+                  Every downvote brings a post closer to elimination. If a post loses all three lives before the 24-hour survival period ends, it is <strong className="text-red-600">permanently obliterated</strong>.
+                </p>
+                <p className="border-l-2 border-red-500 pl-4 italic text-zinc-500">
+                  Nothing is archived. Nothing is recoverable. Once a post is obliterated, it no longer exists.
+                </p>
+              </div>
+            </div>
+            
+            <div className="pt-8">
+              <img src="/txt_tagline.png" alt="Every vote matters • Every post is a challenge" className="h-8 md:h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            </div>
+          </div>
+
+          {/* Why Ripit Card */}
+          <div id="why-ripit" className="relative group flex flex-col justify-between bg-white border border-zinc-200 hover:border-zinc-300 p-8 rounded-[2rem] glow-red transition-all duration-300 shadow-sm">
+            <div className="space-y-6">
+              <div className="inline-flex items-center justify-center">
+                <img src="/ico_flame.png" alt="flame" className="w-20 h-20 object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              </div>
+              <img src="/rip2.png" alt="Why Ripit?" className="h-12 md:h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
+                <p>
+                  Most social media platforms reward attention. Ripit rewards survival.
+                </p>
+                <p>
+                  Every post enters a 24-hour survival challenge where the community decides whether it deserves to remain.
+                </p>
+                <p>
+                  Create something people enjoy, and your post survives. Create something the community rejects, and it moves closer to elimination.
+                </p>
+                <p>
+                  Nothing is guaranteed. Everything must earn its place. Every downvote has consequences, and every post carries real risk.
+                </p>
+                <p className="text-zinc-900 font-medium">
+                  Social media shouldn't just be watched. It should be played.
                 </p>
               </div>
             </div>
 
-            {survivors.length > 0 ? (
-              <div className="w-full max-w-sm mb-12 animate-in slide-in-from-bottom-12 duration-1000 delay-300">
-                <div className="flex items-center justify-between mb-4 px-4">
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src="/trophy.png" 
-                      alt="Survival" 
-                      className="h-6 w-auto object-contain" 
-                      style={{ imageRendering: '-webkit-optimize-contrast' }} 
-                    />
-                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-900">Hall of Fame</span>
-                  </div>
-                  <span className="bg-zinc-900 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest">
-                    {survivors.length} SURVIVORS
-                  </span>
-                </div>
-                
-                <div className="max-h-[500px] overflow-y-auto w-full pr-1 scrollbar-thin">
-                  {survivors.slice(0, 10).map((survivor) => (
-                    <SurvivorRow 
-                      key={`survivor-${survivor.id}`} 
-                      survivor={{ ...survivor, madeIt: true }} 
-                      isSurvivor={isSurvivor}
-                      toggleFollow={toggleFollow}
-                      followedUsers={followedUsers}
-                      navigate={navigate}
-                      handleVote={handleVote}
-                      selectedRoundId={null}
-                      isHistoryView={true}
-                      isChallengeEnded={false}
-                    />
-                  ))}
-                  {survivors.length > 10 && (
-                    <div className="p-4 text-center">
-                      <button 
-                        onClick={() => navigate('/search')}
-                        className="text-[10px] font-black text-purple-600 uppercase tracking-widest hover:underline"
-                      >
-                        View All {survivors.length} in Public Gallery
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : eliminated.length > 0 && (
-              /* ── TOTAL TERMINATION STATE ── */
-              <div className="w-full max-w-sm mb-12 animate-in slide-in-from-bottom-12 duration-1000 delay-300">
-                <div className="bg-rose-50/80 backdrop-blur-md rounded-[2.5rem] border border-rose-100 p-8 shadow-2xl overflow-hidden group text-center">
-                  <div className="relative mb-6">
-                    <Skull size={48} className="text-rose-500 mx-auto drop-shadow-lg" />
-                    <div className="absolute inset-0 bg-rose-200/20 blur-xl rounded-full -z-10" />
-                  </div>
-                  <h3 className="text-2xl font-black text-rose-600 uppercase tracking-tighter italic mb-2">
-                    {t('search_total_termination')}
-                  </h3>
-                  <p className="text-rose-400 font-black uppercase tracking-[0.3em] text-[9px]">
-                    No One Made It Out Alive
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col items-center gap-6 animate-in fade-in duration-1000 delay-700">
-              <button
-                onClick={() => navigate('/search')}
-                className="group relative transition-all active:scale-95 px-5 py-2.5 bg-white border border-zinc-100 rounded-full flex items-center gap-2 shadow-sm hover:bg-zinc-50 hover:border-zinc-200"
-              >
-                <img src="/trophy.png" alt="Trophy" className="h-4 w-4 object-contain group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-black text-zinc-900 uppercase tracking-[0.2em]">View Results</span>
-                <ChevronRight size={14} className="text-zinc-300 group-hover:translate-x-1 transition-transform" />
-              </button>
-              
-              <button
-                onClick={() => {
-                  startNewChallenge();
-                  setVisiblePosts(allPosts);
-                  setActiveTab('pley');
-                  setShowPills(false);
-                }}
-                className="transition-all hover:scale-105 active:scale-95"
-              >
-                <img 
-                  src="/artisan-lobster.png" 
-                  alt="New Round" 
-                  className="h-28 w-auto object-contain drop-shadow-lg" 
-                  style={{ imageRendering: '-webkit-optimize-contrast' }}
-                />
-              </button>
+            <div className="pt-8">
+              <img src="/txt_survive.png" alt="Every day is an opportunity to survive" className="h-8 md:h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </div>
           </div>
-        ) : (visiblePosts.length > 0 || unswipedPosts.length > 0) ? (
-          /* ── Posts feed ── */
-          (visiblePosts.length > 0 ? visiblePosts : unswipedPosts).map((post) => (
-            <PostCard 
-              key={post.id} 
-              {...post} 
-              gameMode={isEliminationRoundActive ? (userSelection || majorityVariant || 'pley') : null}
-              onDelete={() => handleDeletePost(post.id)}
-              onPass={() => handlePassPost(post.id)}
-            />
-          ))
-        ) : (
-          /* ── Empty feed ── */
-          <EmptyFeed 
-            className="min-h-[60vh]"
-            title={allPosts.length === 0 ? "It's Quiet Here" : "All Caught Up"}
-            subtitle={allPosts.length === 0 ? "No posts have been made yet" : "You have swiped all available posts"}
-            actionButton={
-              allPosts.length === 0 ? (
+
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* How It Works & Post Simulator */}
+        <section id="how-it-works" className="space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+              <img src="/rip4.png" alt="How It Works" className="h-36 md:h-52 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <p className="text-zinc-600">
+              Ripit transforms social media into a competitive experience where every decision matters.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Step List (5 cols) */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="flex items-start space-x-4 bg-zinc-50 border border-zinc-200 p-5 rounded-2xl hover:bg-zinc-100/40 transition-all shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm shrink-0 border border-red-200/50">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-bold text-zinc-900 text-base font-outfit">3 Initial Lives</h3>
+                  <p className="text-zinc-600 text-sm mt-1">Every post starts with 3 lives and enters a 24-hour survival challenge.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4 bg-zinc-50 border border-zinc-200 p-5 rounded-2xl hover:bg-zinc-100/40 transition-all shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm shrink-0 border border-red-200/50">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-bold text-zinc-900 text-base font-outfit">Community Downvotes</h3>
+                  <p className="text-zinc-600 text-sm mt-1">Community members downvote posts they believe should not survive.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4 bg-zinc-50 border border-zinc-200 p-5 rounded-2xl hover:bg-zinc-100/40 transition-all shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm shrink-0 border border-red-200/50">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-bold text-zinc-900 text-base font-outfit">Deplete Lives</h3>
+                  <p className="text-zinc-600 text-sm mt-1">Downvotes reduce a post's remaining lives according to Ripit's survival rules.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4 bg-zinc-50 border border-zinc-200 p-5 rounded-2xl hover:bg-zinc-100/40 transition-all shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold text-sm shrink-0 border border-yellow-200/50">
+                  4
+                </div>
+                <div>
+                  <h3 className="font-bold text-zinc-900 text-base font-outfit">Survival or Obliteration</h3>
+                  <p className="text-zinc-600 text-sm mt-1">Posts that survive 24 hours climb the leaderboard. Posts that hit 0 lives are obliterated instantly.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Downvote Simulator (7 cols) */}
+            <div className="lg:col-span-7 bg-white border border-zinc-200 p-6 md:p-8 rounded-[2.5rem] shadow-xl relative glow-red flex flex-col space-y-6">
+              
+              <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+                  <span className="text-sm font-black tracking-widest text-zinc-800 uppercase font-outfit">Live Survival Simulator</span>
+                </div>
+                <span className="text-xs font-semibold text-zinc-400">Try downvoting posts!</span>
+              </div>
+
+              {/* Feed simulation */}
+              <div className="space-y-4 max-h-[360px] overflow-y-auto pr-2 scrollbar-hide">
+                {simulatorPosts.map(post => {
+                  const isObliterated = post.lives === 0;
+
+                  return (
+                    <div 
+                      key={post.id}
+                      className={`p-4 rounded-2xl border transition-all duration-500 relative overflow-hidden ${
+                        isObliterated 
+                          ? 'bg-red-50/50 border-red-200/50 opacity-75' 
+                          : 'bg-zinc-50/40 border-zinc-100 hover:border-zinc-200'
+                      } ${post.isNew ? 'animate-in slide-in-from-top-4 duration-300' : ''}`}
+                    >
+                      {/* Glitch Overlay for Obliterated */}
+                      {isObliterated && (
+                        <div className="absolute inset-0 bg-red-50/40 backdrop-blur-[1px] flex flex-col items-center justify-center z-10 text-center animate-in fade-in duration-300">
+                          <Skull className="w-8 h-8 text-red-500 animate-bounce mb-2" />
+                          <span className="font-black tracking-widest text-red-600 text-xs uppercase glitch-text">
+                            OBLITERATED
+                          </span>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase mt-0.5">
+                            Permanently Erased
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <img 
+                            src={post.avatar} 
+                            alt={post.username} 
+                            className="w-10 h-10 rounded-full object-cover border border-zinc-200"
+                          />
+                          <div>
+                            <span className="font-bold text-sm text-zinc-800">@{post.username}</span>
+                            <div className="flex items-center space-x-2 text-[10px] text-zinc-500">
+                              <span>Challenge Ends in {post.timeRemaining}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Hearts Status */}
+                        <div className="flex items-center space-x-1.5 bg-white p-1.5 rounded-xl border border-zinc-200/80 shadow-sm">
+                          {[...Array(3)].map((_, i) => (
+                            <svg 
+                              key={i} 
+                              className={`w-4 h-4 transition-all duration-300 ${
+                                i < post.lives 
+                                  ? 'text-red-500 fill-red-500 scale-100 drop-shadow-[0_0_4px_rgba(239,68,68,0.3)]' 
+                                  : 'text-zinc-200 fill-transparent scale-90'
+                              }`} 
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                          ))}
+                        </div>
+                      </div>
+
+                      <p className="text-zinc-600 text-sm mt-3 leading-relaxed">
+                        {post.content}
+                      </p>
+
+                      <div className="flex items-center justify-between border-t border-zinc-200/50 mt-4 pt-3 text-xs">
+                        <span className="text-zinc-500 font-medium">Lives remaining: {post.lives}/3</span>
+                        
+                        <button
+                          onClick={() => handleDownvote(post.id)}
+                          disabled={isObliterated}
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold border border-red-100 hover:border-red-500 rounded-xl transition-all flex items-center space-x-1 hover:scale-105 active:scale-95 disabled:pointer-events-none shadow-sm"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                          <span>Downvote</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Feed feedback notice */}
+              {simulatorFeedText && (
+                <div className="text-xs text-center text-yellow-600 font-bold bg-yellow-50 border border-yellow-100 p-2.5 rounded-xl">
+                  {simulatorFeedText}
+                </div>
+              )}
+
+              {/* Mock upload form */}
+              <form onSubmit={handleCreateMockPost} className="border-t border-zinc-100 pt-4 flex items-center gap-3">
+                <input 
+                  type="text" 
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  placeholder="Write a mock post to test the system..." 
+                  className="flex-1 bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all"
+                />
                 <button
-                  onClick={() => setUploadModalOpen(true)}
-                  className="transition-all active:scale-95 hover:scale-105"
+                  type="submit"
+                  className="hover:scale-105 active:scale-95 transition-all flex items-center justify-center shrink-0"
                 >
-                  <img 
-                    src="/btn-post-first.png" 
-                    alt="Post First" 
-                    className="h-14 w-auto object-contain drop-shadow-md" 
+                  <img src="/btn_submit_mock.png" alt="Submit" className="h-14 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                </button>
+              </form>
+
+            </div>
+
+          </div>
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* Survival System */}
+        <section id="survival" className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          
+          <div className="space-y-6">
+              <img src="/btn_survival.png" alt="The Survival System" className="h-10 md:h-12 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <img src="/rip3.png" alt="Survival Isn't Given. It's Earned." className="h-40 md:h-52 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
+              <p>
+                Ripit is built around permanence. When something is obliterated, it is gone forever.
+              </p>
+              <p>
+                Posts that lose all three lives are permanently removed from the platform and cannot be restored.
+              </p>
+              <p>
+                Under Ripit's survival rules, accounts may also face permanent elimination when the platform's account-elimination conditions are met.
+              </p>
+              <p className="text-zinc-800">
+                When an account is permanently obliterated, all associated platform data—including posts, profile information, history, and account records—is permanently removed and cannot be recovered.
+              </p>
+              <p className="border-l-2 border-zinc-200 pl-4 italic text-zinc-500 font-bold uppercase tracking-wide text-xs">
+                Nothing is archived. Nothing is hidden. Nothing is reversible.
+              </p>
+            </div>
+          </div>
+
+          {/* Graphical Survival Engine Illustration */}
+          <div className="relative border border-zinc-200 bg-zinc-50 p-8 rounded-[2.5rem] overflow-hidden flex flex-col items-center justify-center glow-red shadow-sm">
+            <div className="absolute top-0 left-4">
+              <img src="/btn_permanence.png" alt="Permanence Registry" className="h-14 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            </div>
+            
+            <div className="w-full max-w-sm border border-zinc-200 bg-white rounded-2xl p-6 relative z-10 flex flex-col space-y-6 mt-4 shadow-sm">
+              
+              {/* Graphic item 1: active survival */}
+              <div className="border border-zinc-100 bg-zinc-50 rounded-xl p-3.5 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-7 h-7 rounded-lg bg-green-50 text-green-600 flex items-center justify-center font-bold text-[10px] border border-green-200/50">
+                    ACTIVE
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-800">Post #34091</p>
+                    <p className="text-[10px] text-zinc-500">12h 45m left</p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-green-600 font-bold uppercase tracking-wider">3 Lives</span>
+              </div>
+
+              {/* Graphic item 2: danger */}
+              <div className="border border-zinc-100 bg-zinc-50 rounded-xl p-3.5 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-7 h-7 rounded-lg bg-yellow-50 text-yellow-600 flex items-center justify-center font-bold text-[10px] border border-yellow-200/50">
+                    RISK
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-800">Post #20948</p>
+                    <p className="text-[10px] text-zinc-500">01h 04m left</p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-yellow-600 font-bold uppercase tracking-wider">1 Life</span>
+              </div>
+
+              {/* Graphic item 3: obliterated */}
+              <div className="border border-red-100 bg-red-50/50 rounded-xl p-3.5 flex items-center justify-between opacity-70 relative overflow-hidden">
+                <div className="absolute inset-0 bg-red-50/20 flex items-center justify-center">
+                  <span className="text-[10px] font-black tracking-widest text-red-600 uppercase glitch-text">
+                    OBLITERATED
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-7 h-7 rounded-lg bg-red-50 text-red-500 flex items-center justify-center font-bold text-[10px] border border-red-100/50">
+                    FAIL
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-800">Post #11824</p>
+                    <p className="text-[10px] text-zinc-500">00h 00m left</p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">0 Lives</span>
+              </div>
+
+            </div>
+
+            <div className="mt-6 text-center text-xs text-zinc-500 leading-relaxed max-w-xs">
+              Every post is evaluated through continuous decentralised vote audits, protecting the database from retention rot.
+            </div>
+          </div>
+
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* Leaderboards */}
+        <section id="leaderboards" className="space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+            <img src="/sec_leaderboard.png" alt="Survival Leaderboard" className="h-12 md:h-18 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <p className="text-zinc-600">
+              Posts that survive the 24-hour cycle earn recognition, climbing the legacy records.
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto border border-zinc-200 bg-zinc-50 rounded-[2.5rem] overflow-hidden p-6 md:p-8 shadow-sm">
+            <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6">
+              <div className="flex items-center space-x-2">
+                <img src="/ico_trophy.png" alt="trophy" className="w-32 h-32 object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                <span className="text-sm font-black tracking-wider text-zinc-700 uppercase font-outfit">Legacy Survivors (Last 30 Days)</span>
+              </div>
+              <span className="text-xs font-semibold text-zinc-400">Auto-updated</span>
+            </div>
+
+            {/* List */}
+            <div className="space-y-3">
+              {[
+                { rank: 1, user: 'survivor_alpha', days: 28, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&h=100&q=80' },
+                { rank: 2, user: 'solana_ranger', days: 21, avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=100&h=100&q=80' },
+                { rank: 3, user: 'artisan_maker', days: 19, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80' },
+                { rank: 4, user: 'doge_locked_99', days: 15, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80' },
+              ].map(row => (
+                <div key={row.rank} className="flex items-center justify-between bg-white hover:bg-zinc-50/50 border border-zinc-200 hover:border-zinc-300 p-4 rounded-2xl transition-all shadow-sm">
+                  <div className="flex items-center space-x-4">
+                    <img src={row.avatar} alt={row.user} className="w-9 h-9 rounded-full object-cover border border-zinc-200" />
+                    <div>
+                      <span className="font-bold text-sm text-zinc-800">@{row.user}</span>
+                      <p className="text-[10px] text-zinc-500 font-semibold">{row.days} consecutive survival days</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* $67DOGE Token Info */}
+        <section id="token" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <div className="lg:col-span-7 space-y-6">
+            <img src="/btn_ecosystem_token.png" alt="Ecosystem Token" className="h-12 md:h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            
+            <img src="/sec_doge.png" alt="$67DOGE" className="h-12 md:h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            
+            <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
+              <p>
+                <strong className="text-yellow-600 font-bold">$67DOGE</strong> is the official long-term utility token of the Ripit ecosystem.
+              </p>
+              <p>
+                Ripit and the $67DOGE project are independent organizations united through a permanent strategic partnership. While each organization operates independently, both share a long-term vision of building engaging products that create lasting value for their communities.
+              </p>
+              <p className="text-zinc-900 font-medium">
+                Today, our primary focus is building Ripit. The platform comes first.
+              </p>
+              <p>
+                As the Ripit ecosystem grows, $67DOGE will provide utility across Ripit and future ecosystem products.
+              </p>
+            </div>
+
+            <div className="border border-zinc-200 bg-zinc-50 p-5 rounded-2xl space-y-4 shadow-sm">
+              <h4 className="font-bold text-zinc-800 text-sm font-outfit uppercase tracking-wider">Planned Utility</h4>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-zinc-600">
+                <li className="flex items-start space-x-2">
+                  <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                  <span>Paying for products and services throughout the ecosystem.</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                  <span>Discounts on subscriptions, premium features, and services.</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                  <span>Unlocking benefits through verified wallet ownership.</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                  <span>Accessing future ecosystem features as new products launch.</span>
+                </li>
+              </ul>
+              <p className="text-[10px] text-zinc-500 italic mt-2">
+                For example, if a premium subscription costs $10, verified holders may receive a discounted price or choose to pay using $67DOGE, where supported.
+              </p>
+            </div>
+          </div>
+
+          {/* Token Visual Card */}
+          <div className="lg:col-span-5 relative border border-zinc-200 bg-zinc-50 p-8 rounded-[2.5rem] overflow-hidden flex flex-col items-center justify-center glow-gold min-h-[350px] shadow-sm">
+            <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-tr from-yellow-500/5 to-transparent blur-md"></div>
+            
+            <img src="/btn_doge_badge.png" alt="$67DOGE Token" className="w-full max-w-[420px] h-auto object-contain rounded-2xl hover:scale-105 transition-transform duration-500" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+
+            <div className="mt-8 text-center space-y-2 relative z-10">
+              <p className="font-bold text-zinc-800 text-base font-outfit">Long-Term Strategic Alignment</p>
+              <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
+                Building products people genuinely enjoy using, with utility tied to sustainable development.
+              </p>
+            </div>
+            <a
+              href="https://pump.fun/coin/G59uYtk9rbVroVV5dn4FUsYqDuCZDz8qYNwdTuCupump"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 relative z-10 hover:scale-105 active:scale-95 transition-transform duration-200"
+            >
+              <img src="/btn_doge_link.png" alt="Link to $67DOGE" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            </a>
+          </div>
+
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* Transparency & On-Chain Lock Countdown */}
+        <section id="transparency" className="space-y-12">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            <div className="space-y-6">
+              <img src="/btn_transparency.png" alt="On-Chain Transparency" className="h-10 md:h-12 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/sec_lock.png" alt="861,169,396 $67DOGE Locked for 6 Years" className="h-20 md:h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
+                <p>
+                  We believe trust is earned through transparency and consistent execution.
+                </p>
+                <p>
+                  To demonstrate the ecosystem's long-term commitment, <strong className="text-zinc-800">861,169,396 $67DOGE</strong>, representing over <strong className="text-yellow-600">91% of the total token supply</strong>, has been locked for six years through an on-chain smart contract.
+                </p>
+                <p>
+                  The lock is enforced by an on-chain smart contract, meaning the locked tokens cannot be accessed before the unlock date—not even by the project team or StakePoint.
+                </p>
+              </div>
+
+              {/* Verify Links */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                <a 
+                  href="https://stakepoint.app/locks/cmpp4jtrf0000l804b5p48633" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:scale-105 active:scale-95 transition-all flex items-center"
+                >
+                  <img src="/btn_stakepoint.png" alt="Verify on StakePoint" className="h-24 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                </a>
+
+                <a 
+                  href="https://solscan.io/token/G59uYtk9rbVroVV5dn4FUsYqDuCZDz8qYNwdTuCupump" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:scale-105 active:scale-95 transition-all flex items-center"
+                >
+                  <img src="/btn_solscan.png" alt="Verify on Solscan" className="h-24 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                </a>
+              </div>
+            </div>
+
+            {/* Countdown Box */}
+            <div className="bg-zinc-50 border border-zinc-200 p-8 rounded-[2.5rem] glow-gold flex flex-col items-center justify-center text-center space-y-6 shadow-sm">
+              <img src="/btn_countdown.png" alt="Lock Unlock Countdown" className="h-10 md:h-12 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+
+              {/* Countdown Numbers */}
+              <div className="grid grid-cols-5 gap-2 md:gap-4 w-full">
+                
+                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
+                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.years}</span>
+                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Yrs</span>
+                </div>
+
+                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
+                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.days}</span>
+                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Days</span>
+                </div>
+
+                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
+                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.hours.toString().padStart(2, '0')}</span>
+                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Hrs</span>
+                </div>
+
+                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
+                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.minutes.toString().padStart(2, '0')}</span>
+                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Mins</span>
+                </div>
+
+                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
+                  <span className="text-xl md:text-3xl font-black text-red-600 font-outfit animate-pulse">{timeLeft.seconds.toString().padStart(2, '0')}</span>
+                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Secs</span>
+                </div>
+
+              </div>
+
+              <div className="text-xs text-zinc-500 font-medium">
+                Locked on-chain until <span className="text-zinc-800 font-bold">April 6, 2032</span>. Tokens cannot be accessed by anyone before this date.
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* Roadmap */}
+        <section id="roadmap" className="space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+            <img src="/sec_roadmap.png" alt="Roadmap" className="h-12 md:h-18 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <p className="text-zinc-600">
+              Our core release schedule and expansion phases.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+            
+            {/* 2026 Phase */}
+            <div className="border border-zinc-200 bg-zinc-50 p-8 rounded-[2rem] hover:border-red-300 transition-all relative overflow-hidden flex flex-col justify-between shadow-sm">
+              <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-red-100/30 blur-xl pointer-events-none" />
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <img src="/sec_2026.png" alt="2026" className="h-8 md:h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                  <img src="/btn_in_progress.png" alt="In Progress" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                </div>
+                
+                <ul className="space-y-3.5 text-zinc-600 text-sm">
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-2" />
+                    <span>Complete Ripit development.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-2" />
+                    <span>Launch the closed alpha.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-2" />
+                    <span>Launch the public beta.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-2" />
+                    <span>Build the first Ripit community.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-2" />
+                    <span>Continue improving the platform through community feedback.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 2027 Phase */}
+            <div className="border border-zinc-200 bg-zinc-50 p-8 rounded-[2rem] hover:border-yellow-300 transition-all relative overflow-hidden flex flex-col justify-between shadow-sm">
+              <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-yellow-100/20 blur-xl pointer-events-none" />
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <img src="/sec_2027.png" alt="2027" className="h-8 md:h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                  <img src="/btn_future_phase.png" alt="Future Phase" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                </div>
+                
+                <ul className="space-y-3.5 text-zinc-600 text-sm">
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-2" />
+                    <span>Launch on major app stores.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-2" />
+                    <span>Grow the Ripit community worldwide.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-2" />
+                    <span>Introduce $67DOGE utility throughout the Ripit ecosystem.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-2" />
+                    <span>Launch additional ecosystem products and services.</span>
+                  </li>
+                  <li className="flex items-start space-x-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-2" />
+                    <span>Continue expanding the Ripit ecosystem.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* Mission & Vision & Long-Term Vision */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Mission */}
+          <div className="border border-zinc-200 bg-zinc-50 p-6 md:p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
+            <div className="space-y-4">
+              <img src="/vision_mission.png" alt="Our Mission: Meaningful Consequences" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <p className="text-zinc-600 text-sm leading-relaxed">
+                To build a social platform where every post matters and every vote has real consequences.
+              </p>
+            </div>
+          </div>
+
+          {/* Vision */}
+          <div className="border border-zinc-200 bg-zinc-50 p-6 md:p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
+            <div className="space-y-4">
+              <img src="/vision_ecosystem.png" alt="Our Vision: Global Ecosystem" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <p className="text-zinc-600 text-sm leading-relaxed">
+                To build Ripit into a global technology company that creates fun, engaging, and innovative products enjoyed by millions of people around the world.
+              </p>
+            </div>
+          </div>
+
+          {/* Long-Term Vision */}
+          <div className="border border-zinc-200 bg-zinc-50 p-6 md:p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
+            <div className="space-y-4">
+              <img src="/vision_alignment.png" alt="Long-Term Vision: Strategic Alignment" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <p className="text-zinc-600 text-sm leading-relaxed">
+                Ripit is only the beginning. Users will experience connected products, shared utility, and exclusive benefits across a growing strategic ecosystem connected with $67DOGE.
+              </p>
+            </div>
+          </div>
+
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* Waitlist Form Section */}
+        <section id="waitlist" className="max-w-3xl mx-auto text-center space-y-8 py-8">
+          <div className="space-y-4">
+            <img src="/rip7.png" alt="Waitlist" className="h-16 md:h-22 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <p className="text-zinc-600 max-w-xl mx-auto">
+              Ready to play? Secure your spot for the Ripit private alpha and get early access to the survival economy.
+            </p>
+          </div>
+
+          {waitlistSubmitted ? (
+            <div className="bg-zinc-50 border border-red-100 p-8 rounded-3xl max-w-md mx-auto space-y-4 animate-in zoom-in-95 duration-300 shadow-sm">
+              <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto border border-red-100">
+                <Check className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 font-outfit">You are on the list!</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Thanks for registering. We will email you once private alpha spaces become available in your region.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleWaitlistSubmit} className="max-w-md mx-auto space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address" 
+                  className="flex-1 bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-4 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all shadow-sm"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
+                >
+                  <img src="/btn_submit.png" alt="Submit" className="h-32 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                </button>
+              </div>
+              {waitlistError && (
+                <p className="text-xs text-red-500 font-medium">{waitlistError}</p>
+              )}
+            </form>
+          )}
+        </section>
+
+        <hr className="border-zinc-100" />
+
+        {/* FAQ Section */}
+        <section id="faq" className="max-w-3xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <img src="/txt_faq.png" alt="Frequently Asked Questions" className="h-16 md:h-20 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <p className="text-zinc-600">
+              Clear information about Ripit and the survival ecosystem mechanics.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, i) => {
+              const isOpen = openFaq === i;
+
+              return (
+                <div 
+                  key={i} 
+                  className="border border-zinc-200 bg-zinc-50 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm"
+                >
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : i)}
+                    className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-zinc-100/40 transition-colors"
+                  >
+                    <span className="font-bold text-zinc-900 text-sm md:text-base pr-4">{faq.q}</span>
+                    <ChevronDown className={`w-5 h-5 text-zinc-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-red-500' : ''}`} />
+                  </button>
+                  
+                  <div className={`transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[200px] border-t border-zinc-200' : 'max-h-0'}`}>
+                    <div className="p-6 text-zinc-500 text-sm leading-relaxed bg-white">
+                      {faq.a}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-zinc-200 bg-zinc-50 py-12 relative z-10 text-center space-y-6">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center">
+            <img src="/ripit.png" alt="Ripit" className="h-7 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+          </div>
+
+          <div className="text-xs text-zinc-500 font-semibold space-y-1">
+            <p>© {new Date().getFullYear()} Ripit Technologies. All rights reserved.</p>
+            <p>Ecosystem strategic partner of $67DOGE.</p>
+          </div>
+
+          <img src="/btn_ecosystem_node.png" alt="Ecosystem Mode Online" className="h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+        </div>
+      </footer>
+
+      {/* Litepaper Modal */}
+      {litepaperOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            onClick={() => setLitepaperOpen(false)}
+            className="absolute inset-0 bg-zinc-950/40 backdrop-blur-sm"
+          />
+          <div className="relative w-full max-w-3xl max-h-[85vh] bg-white border border-zinc-200 rounded-[2.5rem] shadow-2xl flex flex-col z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-zinc-700">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-white">
+              <div className="flex items-center">
+                <img src="/txt_litepaper_title.png" alt="Litepaper v1.0" className="h-6 md:h-7 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              </div>
+              <button 
+                onClick={() => setLitepaperOpen(false)}
+                className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 hover:text-zinc-800 flex items-center justify-center transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 md:p-8 overflow-y-auto space-y-8 scrollbar-hide text-zinc-600 text-sm md:text-base leading-relaxed">
+              
+              <div className="text-center py-6 border-b border-zinc-100 max-w-md mx-auto space-y-3">
+                {/* Hydrant + Wordmark */}
+                <div className="flex items-center justify-center gap-4">
+                  <img
+                    src="/ripit2.png"
+                    alt="Ripit Hydrant"
+                    className="h-48 w-auto object-contain drop-shadow-lg"
                     style={{ imageRendering: '-webkit-optimize-contrast' }}
                   />
-                </button>
-              ) : undefined
-            }
-          />
-        )}
-      </main>
+                  <img
+                    src="/ripit.png"
+                    alt="Ripit"
+                    className="h-28 w-auto object-contain"
+                    style={{ imageRendering: '-webkit-optimize-contrast' }}
+                  />
+                </div>
+                <p className="text-xs font-black text-red-600 uppercase tracking-widest">Social Media with Stakes</p>
+                <p className="text-xs text-zinc-400">Official Litepaper &amp; Mechanics Protocol Specification</p>
+                {/* Scroll indicator */}
+                <div className="flex flex-col items-center gap-1 pt-2 animate-bounce text-zinc-400">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest">Scroll to read</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider text-red-500 border-l-2 border-red-500 pl-3">1. Executive Summary</h4>
+                <p>
+                  Ripit is a next-generation decentralized social network that breaks away from traditional attention-harvesting mechanics. By stripping away likes, upvotes, and passive engagement hooks, Ripit introduces real stakes back into social interactions.
+                </p>
+                <p>
+                  Every user interaction is governed by the Survival Protocol, turning the feed into a competitive sandbox where quality and authenticity dictate permanence.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider text-red-500 border-l-2 border-red-500 pl-3">2. Core Protocol Mechanics</h4>
+                <div className="bg-zinc-50 border border-zinc-100 p-4 rounded-2xl space-y-2 text-xs md:text-sm shadow-sm">
+                  <p><strong>Initial Allocation:</strong> Every new post is minted with precisely 3 Life Nodes (represented as lives).</p>
+                  <p><strong>Survival Target:</strong> A post must stay active for a continuous 24-hour verification epoch.</p>
+                  <p><strong>The Downvote Constraint:</strong> Downvotes are the primary filter. Each downvote reduces active life status. If lives deplete to 0 before the epoch expires, the post is instantly marked for obliteration.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider text-red-500 border-l-2 border-red-500 pl-3">3. Database Obliteration & Non-Retention</h4>
+                <p>
+                  Traditional platforms maintain user logs indefinitely under complex shadow-archiving standards. Ripit operates on a strict zero-retention model.
+                </p>
+                <p>
+                  Once a post or account meets obliteration status, it is immediately deleted from all distributed storage systems. No backup states are compiled. The transaction is final, permanent, and completely irreversible.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider text-red-500 border-l-2 border-red-500 pl-3">4. $67DOGE Token Synergy</h4>
+                <p>
+                  $67DOGE acts as the unified utility fuel of the Ripit ecosystem. Although both organizations are operationally independent, they share a permanent strategic partnership to align development.
+                </p>
+                <p>
+                  Planned utility features include subscription discounts (e.g. paying for premium features with $67DOGE), exclusive verification status badges, and prioritized wallet checks.
+                </p>
+                <p>
+                  To secure community trust, **861,169,396 $67DOGE** (representing over 91% of total supply) has been locked inside a smart contract for six years, preventing any team liquidations and ensuring permanent strategic alignment.
+                </p>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-zinc-100 flex items-center justify-end bg-white">
+              <button 
+                onClick={() => setLitepaperOpen(false)}
+                className="hover:scale-[1.03] active:scale-95 transition-transform bg-transparent border-0 p-0"
+              >
+                <img src="/gee3.png" alt="Accept Protocol Terms" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
-};
-
-export default Home;
+}

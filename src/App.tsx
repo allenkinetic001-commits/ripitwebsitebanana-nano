@@ -75,11 +75,11 @@ export default function App() {
     <Router>
       <ImagePreloader />
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/notifications" element={<Notifications />} />
