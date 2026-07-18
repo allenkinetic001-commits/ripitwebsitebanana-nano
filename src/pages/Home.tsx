@@ -1201,6 +1201,13 @@ export default function Home() {
             <img src="/pump-icon.png" alt="pump.fun" className="w-3.5 h-3.5 object-contain" />
             $67DOGE
           </a>
+          <span className="text-zinc-700 hidden sm:inline">|</span>
+          {/* Gmail */}
+          <a href="mailto:ripit90210@gmail.com"
+            className="flex items-center gap-1.5 text-zinc-400 hover:text-red-400 transition-colors">
+            <img src="/gmail.png" alt="Gmail" className="w-3.5 h-3.5 object-contain" />
+            ripit90210@gmail.com
+          </a>
         </div>
       </div>
 
