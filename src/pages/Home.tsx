@@ -159,7 +159,7 @@ export default function Home() {
     },
     {
       q: "What is $67DOGE?",
-      a: "67 DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of 67 DOGE as its official utility token. 67 DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners."
+      a: "$67DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of $67DOGE as its official utility token. $67DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners."
     },
     {
       q: "How is the 91% lock on $67DOGE verified?",
@@ -664,10 +664,10 @@ export default function Home() {
             
             <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
               <p>
-                67 DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of 67 DOGE as its official utility token.
+                $67DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of $67DOGE as its official utility token.
               </p>
               <p>
-                67 DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners.
+                $67DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners.
               </p>
               <p className="text-zinc-900 font-medium">
                 Today, our primary focus is building Ripit. The platform comes first.
@@ -1124,7 +1124,7 @@ export default function Home() {
               <div className="space-y-4">
                 <h4 className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider text-red-500 border-l-2 border-red-500 pl-3">4. $67DOGE Token Synergy</h4>
                 <p>
-                  67 DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of 67 DOGE as its official utility token. 67 DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners.
+                  $67DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of $67DOGE as its official utility token. $67DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners.
                 </p>
                 <p>
                   Planned utility features include subscription discounts (e.g. paying for premium features with $67DOGE), exclusive verification status badges, and prioritized wallet checks.
