@@ -543,6 +543,18 @@ export default function Home() {
               <p className="border-l-2 border-zinc-200 pl-4 italic text-zinc-500 font-bold uppercase tracking-wide text-xs">
                 Nothing is archived. Nothing is hidden. Nothing is reversible.
               </p>
+              
+              <div className="pt-4 max-w-md">
+                <video 
+                  className="w-full rounded-2xl border border-zinc-200 shadow-md object-cover" 
+                  controls 
+                  preload="metadata"
+                  playsInline
+                >
+                  <source src="/vax1.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
             </div>
           </div>
 
