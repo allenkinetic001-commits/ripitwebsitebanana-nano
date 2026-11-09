@@ -27,15 +27,6 @@ export default function Home() {
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // $67DOGE Lock Timer State
-  const [timeLeft, setTimeLeft] = useState({
-    years: 5,
-    days: 264,
-    hours: 12,
-    minutes: 30,
-    seconds: 45
-  });
-
   // Survival Simulator State
   const [simulatorPosts, setSimulatorPosts] = useState<MockPost[]>([
     {
@@ -84,36 +75,7 @@ export default function Home() {
     setEmail('');
   };
 
-  // $67DOGE 6-Year Lock Countdown Timer
-  useEffect(() => {
-    // Lock start: April 6, 2026.
-    // Lock end: April 6, 2032 (6 years later)
-    const targetDate = new Date('2032-04-06T17:03:02Z').getTime();
 
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
-
-      if (difference <= 0) {
-        setTimeLeft({ years: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-
-      const seconds = Math.floor((difference / 1000) % 60);
-      const minutes = Math.floor((difference / 1000 / 60) % 60);
-      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-      const daysTotal = Math.floor(difference / (1000 * 60 * 60 * 24));
-      
-      const years = Math.floor(daysTotal / 365.25);
-      const days = Math.floor(daysTotal % 365.25);
-
-      setTimeLeft({ years, days, hours, minutes, seconds });
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Simulator downvote trigger
   const handleDownvote = (id: string) => {
@@ -159,12 +121,8 @@ export default function Home() {
       a: "Yes. Under Ripit's survival rules, if an account repeatedly breaches survival conditions or fails to maintain minimum platform standards, the account itself enters elimination status. Once permanently obliterated, all posts, history, custom profiles, and credentials are swept out completely."
     },
     {
-      q: "What is $67DOGE?",
-      a: "$67DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of $67DOGE as its official utility token. $67DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners."
-    },
-    {
-      q: "How is the 91% lock on $67DOGE verified?",
-      a: "Over 91% of the total token supply (861,169,396 $67DOGE) is locked inside an on-chain smart contract for six years. The lock is public and completely transparent. Anyone can verify this on StakePoint and Solscan using the official contracts."
+      q: "What is $tamiyanoia (Tamiyanoia Cat)?",
+      a: "$tamiyanoia (Tamiyanoia Cat) is the community and utility token integrated with the Ripit ecosystem. Originating from a movement of culture, creativity, and entertainment ('From Africa to the World' 🌍🐱), it powers community transactions, perks, and utility within the Ripit ecosystem. Learn more at yanoiacat.fun."
     },
     {
       q: "Are there any upvotes or likes?",
@@ -195,8 +153,7 @@ export default function Home() {
             <a href="#why-ripit" className="hover:text-red-600 transition-colors">Why Ripit?</a>
             <a href="#how-it-works" className="hover:text-red-600 transition-colors">How It Works</a>
             <a href="#survival" className="hover:text-red-600 transition-colors">Survival</a>
-            <a href="#token" className="hover:text-red-600 transition-colors">$67DOGE</a>
-            <a href="#transparency" className="hover:text-red-600 transition-colors">Lock</a>
+            <a href="#token" className="hover:text-red-600 transition-colors">$tamiyanoia</a>
             <a href="#faq" className="hover:text-red-600 transition-colors">FAQ</a>
           </nav>
 
@@ -264,9 +221,14 @@ export default function Home() {
             </Link>
             <Link
               to="/search"
-              className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="hover:scale-[1.03] active:scale-[0.98] transition-transform inline-flex items-center cursor-pointer"
             >
-              <span>🚀 Launch Ripit App</span>
+              <img 
+                src="/assets/aistudio/launch_ripit_736504d8.png" 
+                alt="Launch Ripit" 
+                className="h-16 md:h-20 w-auto object-contain drop-shadow-xl" 
+                style={{ imageRendering: '-webkit-optimize-contrast' }} 
+              />
             </Link>
             <a 
               href="#waitlist"
@@ -290,7 +252,7 @@ export default function Home() {
               <span>100% Obliterative</span>
             </div>
             <div className="flex items-center space-x-2 bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-200/60">
-              <span>91%+ Locked Token Supply</span>
+              <span>Powered by $tamiyanoia 🌍🐱</span>
             </div>
             <div className="flex items-center space-x-2 bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-200/60">
               <span>No Likes. Zero Upvotes.</span>
@@ -674,7 +636,7 @@ export default function Home() {
                 { rank: 1, user: 'survivor_alpha', days: 28, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&h=100&q=80' },
                 { rank: 2, user: 'solana_ranger', days: 21, avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=100&h=100&q=80' },
                 { rank: 3, user: 'artisan_maker', days: 19, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80' },
-                { rank: 4, user: 'doge_locked_99', days: 15, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80' },
+                { rank: 4, user: 'tami_survivor_99', days: 15, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80' },
               ].map(row => (
                 <div key={row.rank} className="flex items-center justify-between bg-white hover:bg-zinc-50/50 border border-zinc-200 hover:border-zinc-300 p-4 rounded-2xl transition-all shadow-sm">
                   <div className="flex items-center space-x-4">
@@ -692,26 +654,26 @@ export default function Home() {
 
         <hr className="border-zinc-100" />
 
-        {/* $67DOGE Token Info */}
+        {/* $TAMIYANOIA Token Info */}
         <section id="token" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           <div className="lg:col-span-7 space-y-6">
             <img src="/btn_ecosystem_token.png" alt="Ecosystem Token" className="h-12 md:h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             
-            <img src="/sec_doge.png" alt="$67DOGE" className="h-12 md:h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <img src="/assets/aistudio/t_0849aeb7.png" alt="TAMIYANOIA Cat" className="h-16 md:h-22 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             
             <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
               <p>
-                $67DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of $67DOGE as its official utility token.
+                <strong className="text-zinc-900 font-bold">$TAMIYANOIA (Tamiyanoia Cat)</strong> serves as the official community and utility token integrated with the Ripit ecosystem. Built around culture, creativity, entertainment, and decentralized participation — <em>"From Africa to the World. 🌍🐱"</em>
               </p>
               <p>
-                $67DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners.
+                $tamiyanoia powers transactions, tipping, creator perks, and decentralized participation across the platform.
               </p>
               <p className="text-zinc-900 font-medium">
-                Today, our primary focus is building Ripit. The platform comes first.
+                Today, our primary focus is building Ripit. The community and platform come first.
               </p>
               <p>
-                As the Ripit ecosystem grows, $67DOGE will provide utility across Ripit and future ecosystem products.
+                As the Ripit ecosystem expands, $tamiyanoia provides utility across Ripit challenges, subscriptions, verified badges, and future ecosystem products.
               </p>
             </div>
 
@@ -720,134 +682,69 @@ export default function Home() {
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-zinc-600">
                 <li className="flex items-start space-x-2">
                   <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                  <span>Paying for products and services throughout the ecosystem.</span>
+                  <span>Paying for products and survivor services throughout the ecosystem.</span>
                 </li>
                 <li className="flex items-start space-x-2">
                   <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                  <span>Discounts on subscriptions, premium features, and services.</span>
+                  <span>Discounts on subscriptions, premium features, and custom profiles.</span>
                 </li>
                 <li className="flex items-start space-x-2">
                   <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                  <span>Unlocking benefits through verified wallet ownership.</span>
+                  <span>Unlocking creator benefits through verified wallet ownership.</span>
                 </li>
                 <li className="flex items-start space-x-2">
                   <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                  <span>Accessing future ecosystem features as new products launch.</span>
+                  <span>Accessing future ecosystem features and partner drops as new products launch.</span>
                 </li>
               </ul>
               <p className="text-[10px] text-zinc-500 italic mt-2">
-                For example, if a premium subscription costs $10, verified holders may receive a discounted price or choose to pay using $67DOGE, where supported.
+                For example, if a premium subscription costs $10, verified holders may receive a discounted price or choose to pay using $tamiyanoia, where supported.
               </p>
             </div>
           </div>
 
           {/* Token Visual Card */}
           <div className="lg:col-span-5 relative border border-zinc-200 bg-zinc-50 p-8 rounded-[2.5rem] overflow-hidden flex flex-col items-center justify-center glow-gold min-h-[350px] shadow-sm">
-            <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-tr from-yellow-500/5 to-transparent blur-md"></div>
+            <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-tr from-cyan-500/10 to-transparent blur-md"></div>
             
-            <img src="/btn_doge_badge.png" alt="$67DOGE Token" className="w-full max-w-[420px] h-auto object-contain rounded-2xl hover:scale-105 transition-transform duration-500" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <img 
+              src="/assets/aistudio/tami_385a8918.png" 
+              alt="Tamiyanoia Cat" 
+              className="w-full max-w-[340px] md:max-w-[380px] h-auto object-contain rounded-2xl hover:scale-105 transition-transform duration-500 drop-shadow-xl" 
+              style={{ imageRendering: '-webkit-optimize-contrast' }} 
+            />
 
-            <div className="mt-8 text-center space-y-2 relative z-10">
-              <p className="font-bold text-zinc-800 text-base font-outfit">Long-Term Strategic Alignment</p>
+            <div className="mt-6 text-center space-y-2 relative z-10">
+              <p className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider">TAMIYANOIA CAT</p>
               <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
-                Building products people genuinely enjoy using, with utility tied to sustainable development.
+                From Africa to the World. 🌍🐱 Culture, creativity, entertainment, and decentralized Web3 participation.
               </p>
             </div>
+
             <a
-              href="https://pump.fun/coin/G59uYtk9rbVroVV5dn4FUsYqDuCZDz8qYNwdTuCupump"
+              href="https://yanoiacat.fun"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 relative z-10 hover:scale-105 active:scale-95 transition-transform duration-200"
             >
-              <img src="/btn_doge_link.png" alt="Link to $67DOGE" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img 
+                src="/assets/aistudio/link_tami_8cc54551.png" 
+                alt="Link to $tamiyanoia" 
+                className="h-16 md:h-20 w-auto object-contain" 
+                style={{ imageRendering: '-webkit-optimize-contrast' }} 
+              />
             </a>
-          </div>
 
-        </section>
-
-        <hr className="border-zinc-100" />
-
-        {/* Transparency & On-Chain Lock Countdown */}
-        <section id="transparency" className="space-y-12">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            
-            <div className="space-y-6">
-              <img src="/btn_transparency.png" alt="On-Chain Transparency" className="h-10 md:h-12 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-              <img src="/sec_lock.png" alt="861,169,396 $67DOGE Locked for 6 Years" className="h-20 md:h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-              <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
-                <p>
-                  We believe trust is earned through transparency and consistent execution.
-                </p>
-                <p>
-                  To demonstrate the ecosystem's long-term commitment, <strong className="text-zinc-800">861,169,396 $67DOGE</strong>, representing over <strong className="text-yellow-600">91% of the total token supply</strong>, has been locked for six years through an on-chain smart contract.
-                </p>
-                <p>
-                  The lock is enforced by an on-chain smart contract, meaning the locked tokens cannot be accessed before the unlock date—not even by the project team or StakePoint.
-                </p>
-              </div>
-
-              {/* Verify Links */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                <a 
-                  href="https://stakepoint.app/locks/cmpp4jtrf0000l804b5p48633" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:scale-105 active:scale-95 transition-all flex items-center"
-                >
-                  <img src="/btn_stakepoint.png" alt="Verify on StakePoint" className="h-24 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-                </a>
-
-                <a 
-                  href="https://solscan.io/token/G59uYtk9rbVroVV5dn4FUsYqDuCZDz8qYNwdTuCupump" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:scale-105 active:scale-95 transition-all flex items-center"
-                >
-                  <img src="/btn_solscan.png" alt="Verify on Solscan" className="h-24 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-                </a>
-              </div>
+            <div className="mt-4 flex flex-col items-center gap-1.5 relative z-10">
+              <a 
+                href="https://bscscan.com/token/0x8bea530150675c1eC537Bde45c0480164590c898"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] font-mono text-zinc-600 bg-white hover:bg-zinc-100 px-3 py-1.5 rounded-xl border border-zinc-200 transition-colors shadow-xs"
+              >
+                BSC: 0x8bea...90c898 ↗
+              </a>
             </div>
-
-            {/* Countdown Box */}
-            <div className="bg-zinc-50 border border-zinc-200 p-8 rounded-[2.5rem] glow-gold flex flex-col items-center justify-center text-center space-y-6 shadow-sm">
-              <img src="/btn_countdown.png" alt="Lock Unlock Countdown" className="h-10 md:h-12 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-
-              {/* Countdown Numbers */}
-              <div className="grid grid-cols-5 gap-2 md:gap-4 w-full">
-                
-                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
-                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.years}</span>
-                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Yrs</span>
-                </div>
-
-                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
-                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.days}</span>
-                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Days</span>
-                </div>
-
-                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
-                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.hours.toString().padStart(2, '0')}</span>
-                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Hrs</span>
-                </div>
-
-                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
-                  <span className="text-xl md:text-3xl font-black text-zinc-900 font-outfit">{timeLeft.minutes.toString().padStart(2, '0')}</span>
-                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Mins</span>
-                </div>
-
-                <div className="bg-white border border-zinc-200 p-3 md:p-4 rounded-2xl flex flex-col justify-center items-center shadow-sm">
-                  <span className="text-xl md:text-3xl font-black text-red-600 font-outfit animate-pulse">{timeLeft.seconds.toString().padStart(2, '0')}</span>
-                  <span className="text-[9px] md:text-xs text-zinc-400 font-bold uppercase mt-1">Secs</span>
-                </div>
-
-              </div>
-
-              <div className="text-xs text-zinc-500 font-medium">
-                Locked on-chain until <span className="text-zinc-800 font-bold">April 6, 2032</span>. Tokens cannot be accessed by anyone before this date.
-              </div>
-            </div>
-
           </div>
 
         </section>
@@ -921,7 +818,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-start space-x-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-2" />
-                    <span>Introduce $67DOGE utility throughout the Ripit ecosystem.</span>
+                    <span>Introduce $tamiyanoia utility throughout the Ripit ecosystem.</span>
                   </li>
                   <li className="flex items-start space-x-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-2" />
@@ -968,7 +865,7 @@ export default function Home() {
             <div className="space-y-4">
               <img src="/vision_alignment.png" alt="Long-Term Vision: Strategic Alignment" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               <p className="text-zinc-600 text-sm leading-relaxed">
-                Ripit is only the beginning. Users will experience connected products, shared utility, and exclusive benefits across a growing strategic ecosystem connected with $67DOGE.
+                Ripit is only the beginning. Users will experience connected products, shared utility, and exclusive benefits across a growing strategic ecosystem connected with $tamiyanoia (Tamiyanoia Cat).
               </p>
             </div>
           </div>
@@ -1071,7 +968,7 @@ export default function Home() {
 
           <div className="text-xs text-zinc-500 font-semibold space-y-1">
             <p>© {new Date().getFullYear()} Ripit Technologies. All rights reserved.</p>
-            <p>Ecosystem strategic partner of $67DOGE.</p>
+            <p>Ecosystem strategic partner of Tamiyanoia Cat ($tamiyanoia).</p>
           </div>
 
           <img src="/btn_ecosystem_node.png" alt="Ecosystem Mode Online" className="h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
@@ -1160,15 +1057,12 @@ export default function Home() {
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider text-red-500 border-l-2 border-red-500 pl-3">4. $67DOGE Token Synergy</h4>
+                <h4 className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider text-cyan-600 border-l-2 border-cyan-500 pl-3">4. $TAMIYANOIA Token Synergy</h4>
                 <p>
-                  $67DOGE serves as the official utility token of the Ripit ecosystem. Ripit has adopted the token for long-term use across its platform. Ripit is committed to the long-term adoption of $67DOGE as its official utility token. $67DOGE is an independently developed digital asset that powers transactions and utility within the Ripit ecosystem. $67DOGE and Ripit are not partners.
+                  $TAMIYANOIA (Tamiyanoia Cat) serves as the official community and utility token integrated with the Ripit ecosystem. Originating as a Web3 cultural movement celebrating creativity, entertainment, and decentralized participation ("From Africa to the World" 🌍🐱), Ripit has adopted $tamiyanoia for ecosystem-wide utility.
                 </p>
                 <p>
-                  Planned utility features include subscription discounts (e.g. paying for premium features with $67DOGE), exclusive verification status badges, and prioritized wallet checks.
-                </p>
-                <p>
-                  To secure community trust, **861,169,396 $67DOGE** (representing over 91% of total supply) has been locked inside a smart contract for six years, preventing any team liquidations and ensuring permanent strategic alignment.
+                  Planned utility features include subscription discounts (e.g. paying for premium features with $tamiyanoia), exclusive verification status badges, creator tipping, and prioritized community features. Learn more at yanoiacat.fun.
                 </p>
               </div>
 
@@ -1206,10 +1100,10 @@ export default function Home() {
           </a>
           <span className="text-zinc-700 hidden sm:inline">|</span>
           {/* X / Twitter 2 */}
-          <a href="https://x.com/Officialripit" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-yellow-400 transition-colors">
+          <a href="https://x.com/TAMIYANOIA_Cat" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-zinc-400 hover:text-cyan-400 transition-colors">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            @Officialripit <span className="text-yellow-500 ml-0.5">(Mayor of $67DOGE)</span>
+            @TAMIYANOIA_Cat <span className="text-cyan-400 ml-0.5">(Tamiyanoia Cat)</span>
           </a>
           <span className="text-zinc-700 hidden sm:inline">|</span>
           {/* Instagram 1 */}
@@ -1233,12 +1127,14 @@ export default function Home() {
             r/ripit_ai
           </a>
           <span className="text-zinc-700 hidden sm:inline">|</span>
-          {/* pump.fun */}
-          <a href="https://pump.fun/coin/G59uYtk9rbVroVV5dn4FUsYqDuCZDz8qYNwdTuCupump" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-yellow-500 hover:text-yellow-300 transition-colors font-bold">
-            <img src="/pump-icon.png" alt="pump.fun" className="w-3.5 h-3.5 object-contain" />
-            $67DOGE
+          {/* yanoiacat.fun */}
+          <a href="https://yanoiacat.fun" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors font-bold">
+            <img src="/assets/aistudio/tami_385a8918.png" alt="Tamiyanoia Cat" className="w-4 h-4 object-contain rounded-full" />
+            $tamiyanoia (yanoiacat.fun)
           </a>
+          <span className="text-zinc-700 hidden sm:inline">|</span>
+          {/* Gmail */}
           <span className="text-zinc-700 hidden sm:inline">|</span>
           {/* Gmail */}
           <a href="mailto:ripit90210@gmail.com"
