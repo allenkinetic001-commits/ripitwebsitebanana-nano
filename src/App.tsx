@@ -19,8 +19,14 @@ import { useChallenge } from "./contexts/ChallengeContext";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, authLoading, isEliminated } = useChallenge();
+  const isGuest = typeof window !== 'undefined' && (
+    localStorage.getItem('isAuthenticated') === 'true' || 
+    localStorage.getItem('isGuest') === 'true' ||
+    window.location.search.includes('preview') ||
+    window.location.pathname.startsWith('/settings')
+  );
   
-  if (authLoading && !isAuthenticated) {
+  if (authLoading && !isAuthenticated && !isGuest) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-zinc-50">
         <div className="w-8 h-8 rounded-full border-4 border-zinc-200 border-t-zinc-900 animate-spin"></div>
@@ -29,8 +35,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // For local preview, we can bypass the redirect if a special flag is set or if we just want to allow viewing
-  if (!isAuthenticated && !window.location.search.includes('preview')) {
+  // For local preview, guest mode, or settings, bypass redirect
+  if (!isAuthenticated && !isGuest) {
     return <Navigate to="/login" replace />;
   }
   

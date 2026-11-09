@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Flame, Clock, X, ChevronRight, Trophy, Skull, Shield, 
   ExternalLink, ChevronDown, Check, Send, Info, Lock
@@ -199,9 +200,22 @@ export default function Home() {
             <a href="#faq" className="hover:text-red-600 transition-colors">FAQ</a>
           </nav>
 
-          <div className="flex items-center space-x-4">
-            <a href="#waitlist" className="transition-all active:scale-95 hover:opacity-80">
-              <img src="/rip7.png" alt="Waitlist" className="h-16 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+          <div className="flex items-center space-x-3">
+            <Link 
+              to="/settings" 
+              className="px-3.5 py-2 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-700 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-1.5"
+            >
+              <span>⚙️ Settings</span>
+            </Link>
+            <Link 
+              to="/search" 
+              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <span>Open App</span>
+              <ChevronRight size={14} />
+            </Link>
+            <a href="#waitlist" className="transition-all active:scale-95 hover:opacity-80 hidden sm:block">
+              <img src="/rip7.png" alt="Waitlist" className="h-14 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </a>
           </div>
         </div>
@@ -241,19 +255,31 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-lg mx-auto pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 w-full max-w-2xl mx-auto pt-4">
+            <Link
+              to="/settings"
+              className="px-6 py-3.5 bg-zinc-900 hover:bg-black text-white text-sm font-bold rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>⚙️ Open Settings</span>
+            </Link>
+            <Link
+              to="/search"
+              className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>🚀 Launch Ripit App</span>
+            </Link>
             <a 
               href="#waitlist"
               className="hover:scale-[1.03] active:scale-[0.98] transition-transform"
             >
-              <img src="/gee1.png" alt="Join Waitlist" className="h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/gee1.png" alt="Join Waitlist" className="h-24 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </a>
             
             <button 
               onClick={() => setLitepaperOpen(true)}
-              className="hover:scale-[1.03] active:scale-[0.98] transition-transform bg-transparent border-0 p-0"
+              className="hover:scale-[1.03] active:scale-[0.98] transition-transform bg-transparent border-0 p-0 cursor-pointer"
             >
-              <img src="/gee2.png" alt="Read Litepaper" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/gee2.png" alt="Read Litepaper" className="h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </button>
           </div>
 

@@ -305,7 +305,7 @@ const Chat = () => {
           senderInfo = {
             username: existingSession.username,
             avatar_url: existingSession.avatar,
-            full_name: existingSession.fullName
+            full_name: existingSession.fullName || ''
           };
         }
 

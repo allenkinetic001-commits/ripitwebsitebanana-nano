@@ -154,7 +154,7 @@ const Profile = () => {
       // 3. Update Context & Local State
       const updatedProfile = { ...userProfile, avatar: avatarUrl };
       setUserProfile(updatedProfile);
-      setProfileData(prev => ({ ...prev, avatar_url: avatarUrl }));
+      setProfileData((prev: any) => ({ ...prev, avatar_url: avatarUrl }));
       
       // Update cache
       localStorage.setItem(`profile_v2_${session.user.id}`, JSON.stringify(updatedProfile));
@@ -210,7 +210,7 @@ const Profile = () => {
       };
       
       setUserProfile(finalProfile);
-      setProfileData(prev => ({
+      setProfileData((prev: any) => ({
         ...prev,
         username: editForm.username,
         full_name: editForm.fullName,

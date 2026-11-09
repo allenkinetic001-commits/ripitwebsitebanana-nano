@@ -186,8 +186,28 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-zinc-500 font-medium">
+        <div className="mt-8 text-center space-y-3">
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.setItem('isAuthenticated', 'true');
+              localStorage.setItem('isGuest', 'true');
+              localStorage.setItem('supabaseUserId', 'guest-preview-user');
+              localStorage.setItem('userProfile', JSON.stringify({
+                username: 'banana_player',
+                fullName: 'Banana Contender',
+                bio: 'Ripit contender ⚡ Surviving the challenge',
+                avatar: '/premium-default-avatar.png',
+                website: 'https://ripit.app'
+              }));
+              navigate('/settings');
+            }}
+            className="w-full py-3 px-4 bg-zinc-900 hover:bg-black text-white text-xs font-bold rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>⚙️ Open Settings & App (Guest Mode)</span>
+          </button>
+
+          <p className="text-zinc-500 font-medium text-sm">
             Don't have an account?{' '}
             <Link to="/signup" className="text-red-600 font-bold hover:text-red-700 transition-colors">
               Create Account
