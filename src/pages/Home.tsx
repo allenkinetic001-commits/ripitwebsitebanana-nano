@@ -159,12 +159,6 @@ export default function Home() {
 
           <div className="flex items-center space-x-3">
             <Link 
-              to="/settings" 
-              className="px-3.5 py-2 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-700 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-1.5"
-            >
-              <span>⚙️ Settings</span>
-            </Link>
-            <Link 
               to="/search" 
               className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
             >
@@ -213,12 +207,6 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-4 w-full max-w-2xl mx-auto pt-4">
-            <Link
-              to="/settings"
-              className="px-6 py-3.5 bg-zinc-900 hover:bg-black text-white text-sm font-bold rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>⚙️ Open Settings</span>
-            </Link>
             <Link
               to="/search"
               className="hover:scale-[1.03] active:scale-[0.98] transition-transform inline-flex items-center cursor-pointer"
@@ -725,12 +713,12 @@ export default function Home() {
               href="https://yanoiacat.fun"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 relative z-10 hover:scale-105 active:scale-95 transition-transform duration-200"
+              className="mt-6 relative z-10 hover:scale-105 active:scale-95 transition-transform duration-200 flex items-center justify-center"
             >
               <img 
                 src="/assets/aistudio/link_tami_8cc54551.png" 
                 alt="Link to $tamiyanoia" 
-                className="h-16 md:h-20 w-auto object-contain" 
+                className="h-28 md:h-36 w-auto max-w-[420px] object-contain drop-shadow-lg" 
                 style={{ imageRendering: '-webkit-optimize-contrast' }} 
               />
             </a>
