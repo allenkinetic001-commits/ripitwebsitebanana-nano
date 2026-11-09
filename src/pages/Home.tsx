@@ -143,9 +143,9 @@ export default function Home() {
 
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 w-full border-b border-zinc-100 bg-white/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/header_logo.png" alt="Ripit" className="h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <img src="/header_logo.png" alt="Ripit" className="h-16 sm:h-22 md:h-28 w-auto max-w-[60vw] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
           </div>
 
           <nav className="hidden md:flex items-center space-x-8 text-sm font-semibold text-zinc-500">
@@ -160,12 +160,12 @@ export default function Home() {
           <div className="flex items-center space-x-3">
             <Link 
               to="/search" 
-              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
             >
               <span>Open App</span>
               <ChevronRight size={14} />
             </Link>
-            <a href="#waitlist" className="transition-all active:scale-95 hover:opacity-80 hidden sm:block">
+            <a href="#waitlist" className="transition-all active:scale-95 hover:opacity-80 hidden sm:block shrink-0">
               <img src="/rip7.png" alt="Waitlist" className="h-14 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </a>
           </div>
@@ -173,63 +173,63 @@ export default function Home() {
       </header>
 
       {/* Main Container */}
-      <main className="relative max-w-7xl mx-auto px-6 pt-12 pb-24 space-y-36">
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-24 space-y-24 sm:space-y-32 md:space-y-36 overflow-hidden">
 
         {/* Hero Section */}
-        <section className="relative flex flex-col items-center justify-center text-center pt-8 md:pt-16 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-top-6 duration-700">
+        <section className="relative flex flex-col items-center justify-center text-center pt-4 sm:pt-8 md:pt-16 max-w-4xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-top-6 duration-700 w-full">
           
           {/* Logo Brand Graphic */}
-          <div className="relative group cursor-default flex flex-row items-center justify-center gap-6 -translate-x-8">
+          <div className="relative group cursor-default flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 md:-translate-x-8 max-w-full px-2">
             <img
               src="/ripit2.png"
               alt="Ripit Hydrant"
-              className="h-80 md:h-[480px] w-auto object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500 shrink-0"
+              className="h-52 sm:h-72 md:h-[420px] lg:h-[480px] w-auto max-w-[70vw] object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-500 shrink-0"
               style={{ imageRendering: '-webkit-optimize-contrast' }}
             />
             <img
               src="/ripit.png"
               alt="Ripit"
-              className="h-32 md:h-48 w-auto object-contain"
+              className="h-20 sm:h-32 md:h-44 lg:h-48 w-auto max-w-[85vw] object-contain"
               style={{ imageRendering: '-webkit-optimize-contrast' }}
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 px-2">
             <img 
               src="/uio.png" 
               alt="Social Media with Stakes" 
-              className="h-16 md:h-28 w-auto object-contain mx-auto"
+              className="h-14 sm:h-20 md:h-28 w-auto max-w-[90vw] object-contain mx-auto"
               style={{ imageRendering: '-webkit-optimize-contrast' }}
             />
-            <p className="text-lg md:text-2xl text-zinc-600 font-medium max-w-2xl mx-auto">
+            <p className="text-base sm:text-xl md:text-2xl text-zinc-600 font-medium max-w-2xl mx-auto px-2">
               Every downvote matters. Every post has something to lose.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 w-full max-w-2xl mx-auto pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto pt-2 sm:pt-4 px-2">
             <Link
               to="/search"
-              className="hover:scale-[1.03] active:scale-[0.98] transition-transform inline-flex items-center cursor-pointer"
+              className="hover:scale-[1.03] active:scale-[0.98] transition-transform inline-flex items-center cursor-pointer max-w-full"
             >
               <img 
                 src="/assets/aistudio/launch_ripit_736504d8.png" 
                 alt="Launch Ripit" 
-                className="h-16 md:h-20 w-auto object-contain drop-shadow-xl" 
+                className="h-14 sm:h-16 md:h-20 w-auto max-w-[85vw] object-contain drop-shadow-xl" 
                 style={{ imageRendering: '-webkit-optimize-contrast' }} 
               />
             </Link>
             <a 
               href="#waitlist"
-              className="hover:scale-[1.03] active:scale-[0.98] transition-transform"
+              className="hover:scale-[1.03] active:scale-[0.98] transition-transform max-w-full"
             >
-              <img src="/gee1.png" alt="Join Waitlist" className="h-24 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/gee1.png" alt="Join Waitlist" className="h-18 sm:h-24 w-auto max-w-[75vw] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </a>
             
             <button 
               onClick={() => setLitepaperOpen(true)}
-              className="hover:scale-[1.03] active:scale-[0.98] transition-transform bg-transparent border-0 p-0 cursor-pointer"
+              className="hover:scale-[1.03] active:scale-[0.98] transition-transform bg-transparent border-0 p-0 cursor-pointer max-w-full"
             >
-              <img src="/gee2.png" alt="Read Litepaper" className="h-28 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/gee2.png" alt="Read Litepaper" className="h-20 sm:h-28 w-auto max-w-[80vw] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </button>
           </div>
 
@@ -321,10 +321,10 @@ export default function Home() {
         <hr className="border-zinc-100" />
 
         {/* How It Works & Post Simulator */}
-        <section id="how-it-works" className="space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-4">
-              <img src="/rip4.png" alt="How It Works" className="h-36 md:h-52 w-auto object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            <p className="text-zinc-600">
+        <section id="how-it-works" className="space-y-8 sm:space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-4 px-2">
+            <img src="/rip4.png" alt="How It Works" className="h-20 sm:h-36 md:h-52 w-auto max-w-full object-contain mx-auto" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <p className="text-zinc-600 text-sm sm:text-base">
               Ripit transforms social media into a competitive experience where every decision matters.
             </p>
           </div>
@@ -498,11 +498,11 @@ export default function Home() {
         <hr className="border-zinc-100" />
 
         {/* Survival System */}
-        <section id="survival" className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <section id="survival" className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           
           <div className="space-y-6">
-              <img src="/btn_survival.png" alt="The Survival System" className="h-10 md:h-12 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            <img src="/rip3.png" alt="Survival Isn't Given. It's Earned." className="h-40 md:h-52 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <img src="/btn_survival.png" alt="The Survival System" className="h-8 sm:h-10 md:h-12 w-auto max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+            <img src="/rip3.png" alt="Survival Isn't Given. It's Earned." className="h-24 sm:h-36 md:h-52 w-auto max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             <div className="text-zinc-600 space-y-4 leading-relaxed text-sm md:text-base">
               <p>
                 Ripit is built around permanence. When something is obliterated, it is gone forever.
@@ -692,17 +692,17 @@ export default function Home() {
           </div>
 
           {/* Token Visual Card */}
-          <div className="lg:col-span-5 relative border border-zinc-200 bg-zinc-50 p-8 rounded-[2.5rem] overflow-hidden flex flex-col items-center justify-center glow-gold min-h-[350px] shadow-sm">
+          <div className="lg:col-span-5 relative border border-zinc-200 bg-zinc-50 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden flex flex-col items-center justify-center glow-gold min-h-[350px] shadow-sm max-w-full">
             <div className="absolute -inset-1 rounded-[2.5rem] bg-gradient-to-tr from-cyan-500/10 to-transparent blur-md"></div>
             
             <img 
               src="/assets/aistudio/tami_385a8918.png" 
               alt="Tamiyanoia Cat" 
-              className="w-full max-w-[340px] md:max-w-[380px] h-auto object-contain rounded-2xl hover:scale-105 transition-transform duration-500 drop-shadow-xl" 
+              className="w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] h-auto object-contain rounded-2xl hover:scale-105 transition-transform duration-500 drop-shadow-xl" 
               style={{ imageRendering: '-webkit-optimize-contrast' }} 
             />
 
-            <div className="mt-6 text-center space-y-2 relative z-10">
+            <div className="mt-6 text-center space-y-2 relative z-10 px-2">
               <p className="font-black text-zinc-900 text-lg font-outfit uppercase tracking-wider">TAMIYANOIA CAT</p>
               <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
                 From Africa to the World. 🌍🐱 Culture, creativity, entertainment, and decentralized Web3 participation.
@@ -713,12 +713,12 @@ export default function Home() {
               href="https://yanoiacat.fun"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 relative z-10 hover:scale-105 active:scale-95 transition-transform duration-200 flex items-center justify-center"
+              className="mt-6 relative z-10 hover:scale-105 active:scale-95 transition-transform duration-200 flex items-center justify-center w-full max-w-[380px] px-2"
             >
               <img 
                 src="/assets/aistudio/link_tami_8cc54551.png" 
                 alt="Link to $tamiyanoia" 
-                className="h-28 md:h-36 w-auto max-w-[420px] object-contain drop-shadow-lg" 
+                className="w-full h-auto max-h-24 sm:max-h-28 md:max-h-36 object-contain drop-shadow-lg" 
                 style={{ imageRendering: '-webkit-optimize-contrast' }} 
               />
             </a>
@@ -728,7 +728,7 @@ export default function Home() {
                 href="https://bscscan.com/token/0x8bea530150675c1eC537Bde45c0480164590c898"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] font-mono text-zinc-600 bg-white hover:bg-zinc-100 px-3 py-1.5 rounded-xl border border-zinc-200 transition-colors shadow-xs"
+                className="text-[11px] font-mono text-zinc-600 bg-white hover:bg-zinc-100 px-3 py-1.5 rounded-xl border border-zinc-200 transition-colors shadow-xs max-w-full truncate"
               >
                 BSC: 0x8bea...90c898 ↗
               </a>
@@ -751,13 +751,13 @@ export default function Home() {
           <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 relative">
             
             {/* 2026 Phase */}
-            <div className="border border-zinc-200 bg-zinc-50 p-8 rounded-[2rem] hover:border-red-300 transition-all relative overflow-hidden flex flex-col justify-between shadow-sm">
+            <div className="border border-zinc-200 bg-zinc-50 p-6 sm:p-8 rounded-[2rem] hover:border-red-300 transition-all relative overflow-hidden flex flex-col justify-between shadow-sm">
               <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-red-100/30 blur-xl pointer-events-none" />
               
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <img src="/sec_2026.png" alt="2026" className="h-8 md:h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-                  <img src="/btn_in_progress.png" alt="In Progress" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                <div className="flex items-center justify-between gap-2">
+                  <img src="/sec_2026.png" alt="2026" className="h-7 sm:h-8 md:h-10 w-auto max-w-[40%] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                  <img src="/btn_in_progress.png" alt="In Progress" className="h-16 sm:h-24 md:h-36 w-auto max-w-[55%] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
                 </div>
                 
                 <ul className="space-y-3.5 text-zinc-600 text-sm">
@@ -786,13 +786,13 @@ export default function Home() {
             </div>
 
             {/* 2027 Phase */}
-            <div className="border border-zinc-200 bg-zinc-50 p-8 rounded-[2rem] hover:border-yellow-300 transition-all relative overflow-hidden flex flex-col justify-between shadow-sm">
+            <div className="border border-zinc-200 bg-zinc-50 p-6 sm:p-8 rounded-[2rem] hover:border-yellow-300 transition-all relative overflow-hidden flex flex-col justify-between shadow-sm">
               <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-yellow-100/20 blur-xl pointer-events-none" />
               
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <img src="/sec_2027.png" alt="2027" className="h-8 md:h-10 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-                  <img src="/btn_future_phase.png" alt="Future Phase" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                <div className="flex items-center justify-between gap-2">
+                  <img src="/sec_2027.png" alt="2027" className="h-7 sm:h-8 md:h-10 w-auto max-w-[40%] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                  <img src="/btn_future_phase.png" alt="Future Phase" className="h-16 sm:h-24 md:h-36 w-auto max-w-[55%] object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
                 </div>
                 
                 <ul className="space-y-3.5 text-zinc-600 text-sm">
@@ -826,12 +826,12 @@ export default function Home() {
         <hr className="border-zinc-100" />
 
         {/* Mission & Vision & Long-Term Vision */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           
           {/* Mission */}
           <div className="border border-zinc-200 bg-zinc-50 p-6 md:p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
             <div className="space-y-4">
-              <img src="/vision_mission.png" alt="Our Mission: Meaningful Consequences" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/vision_mission.png" alt="Our Mission: Meaningful Consequences" className="h-20 sm:h-28 md:h-36 w-auto max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               <p className="text-zinc-600 text-sm leading-relaxed">
                 To build a social platform where every post matters and every vote has real consequences.
               </p>
@@ -841,7 +841,7 @@ export default function Home() {
           {/* Vision */}
           <div className="border border-zinc-200 bg-zinc-50 p-6 md:p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
             <div className="space-y-4">
-              <img src="/vision_ecosystem.png" alt="Our Vision: Global Ecosystem" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/vision_ecosystem.png" alt="Our Vision: Global Ecosystem" className="h-20 sm:h-28 md:h-36 w-auto max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               <p className="text-zinc-600 text-sm leading-relaxed">
                 To build Ripit into a global technology company that creates fun, engaging, and innovative products enjoyed by millions of people around the world.
               </p>
@@ -851,7 +851,7 @@ export default function Home() {
           {/* Long-Term Vision */}
           <div className="border border-zinc-200 bg-zinc-50 p-6 md:p-8 rounded-[2rem] flex flex-col justify-between shadow-sm">
             <div className="space-y-4">
-              <img src="/vision_alignment.png" alt="Long-Term Vision: Strategic Alignment" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <img src="/vision_alignment.png" alt="Long-Term Vision: Strategic Alignment" className="h-20 sm:h-28 md:h-36 w-auto max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               <p className="text-zinc-600 text-sm leading-relaxed">
                 Ripit is only the beginning. Users will experience connected products, shared utility, and exclusive benefits across a growing strategic ecosystem connected with $tamiyanoia (Tamiyanoia Cat).
               </p>
@@ -889,14 +889,14 @@ export default function Home() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address" 
-                  className="flex-1 bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-4 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all shadow-sm"
+                  className="flex-1 bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-3.5 sm:py-4 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-all shadow-sm"
                   required
                 />
                 <button
                   type="submit"
-                  className="hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
+                  className="hover:scale-105 active:scale-95 transition-all flex items-center justify-center max-w-full"
                 >
-                  <img src="/btn_submit.png" alt="Submit" className="h-32 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                  <img src="/btn_submit.png" alt="Submit" className="h-16 sm:h-24 md:h-32 w-auto max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
                 </button>
               </div>
               {waitlistError && (
@@ -1062,7 +1062,7 @@ export default function Home() {
                 onClick={() => setLitepaperOpen(false)}
                 className="hover:scale-[1.03] active:scale-95 transition-transform bg-transparent border-0 p-0"
               >
-                <img src="/gee3.png" alt="Accept Protocol Terms" className="h-36 w-auto object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                <img src="/gee3.png" alt="Accept Protocol Terms" className="h-16 sm:h-24 md:h-36 w-auto max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               </button>
             </div>
 
